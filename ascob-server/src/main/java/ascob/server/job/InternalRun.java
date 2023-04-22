@@ -44,7 +44,17 @@ public class InternalRun {
 	LocalDateTime submissionTime;
 	
 	LocalDateTime endTime;
+	
+	Boolean monitored; 
 		
+	public Boolean getMonitored() {
+		return monitored;
+	}
+
+	public void setMonitored(Boolean monitored) {
+		this.monitored = monitored;
+	}
+
 	public String getDescription() {
 		return description;
 	}
@@ -118,4 +128,8 @@ public class InternalRun {
 	}
 
 
+	@Override
+	public String toString() {
+		return "["+this.getClass().getName()+" id:"+id+" status:"+status+"]";
+	}
 }

@@ -3,9 +3,9 @@ package ascob.api;
 public enum RunStatus {
 
 	DEFINED(false,false),
+	WAITING_LOCKS(false,false),
 	SUBMITTED(true,false),
 	IN_DOUBT(false,true),
-	WAITING_LOCKS(true,false),
 	RUNNING(true,false),
 	SUCCEDED(false,true),
 	FAILED(false,true);
@@ -25,4 +25,5 @@ public enum RunStatus {
 	public boolean isFinalState() {
 		return finalState;
 	}
+	
 }
