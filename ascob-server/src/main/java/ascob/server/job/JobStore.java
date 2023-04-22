@@ -42,8 +42,9 @@ public class JobStore {
 	
 	static final List<RunStatus>  ACTIVE_STATUSES = List.of(RunStatus.values()).stream().filter(s ->! s.isFinalState()).toList();
 			
-	public List<InternalRun> getActiveJobs() {
-		TypedQuery<InternalRun> runsQuery= entityManager.createQuery("from InternalRun where status in (:statuses)", InternalRun.class);
+	public List<InternalRun> getActiveMonitoredJobs() {
+		TypedQuery<InternalRun> runsQuery= entityManager.createQuery("from InternalRun where monitored=:monitored and status in (:statuses)", InternalRun.class);
+		runsQuery.setParameter("monitored", Boolean.TRUE);
 		runsQuery.setParameter("statuses", ACTIVE_STATUSES);
 		return runsQuery.getResultList();
 	}

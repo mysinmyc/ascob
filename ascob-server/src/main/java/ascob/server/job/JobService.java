@@ -95,7 +95,7 @@ public class JobService {
 
 	public boolean refreshActiveJobs() {
 		log.debug("Refresh active jobs...");
-		List<InternalRun> activeRuns = jobStore.getActiveJobs();
+		List<InternalRun> activeRuns = jobStore.getActiveMonitoredJobs();
 		for (InternalRun run : activeRuns) {
 			try {
 				refresh(run);
