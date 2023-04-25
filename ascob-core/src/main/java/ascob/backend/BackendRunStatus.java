@@ -5,7 +5,8 @@ import ascob.api.RunStatus;
 public enum BackendRunStatus {
 	RUNNING,
 	SUCCEDED,
-	FAILED;
+	FAILED,
+	ABORTED;
 	
 	public RunStatus toRunStatus() {
 		switch (this) {
@@ -13,6 +14,8 @@ public enum BackendRunStatus {
 				return RunStatus.SUCCEDED;
 			case FAILED:
 				return RunStatus.FAILED;
+			case ABORTED:
+				return RunStatus.ABORTED;
 			default:
 				return RunStatus.RUNNING;
 		}

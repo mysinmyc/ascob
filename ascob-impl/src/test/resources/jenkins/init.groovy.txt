@@ -1,0 +1,10 @@
+import hudson.model.User
+import jenkins.security.ApiTokenProperty
+
+// workaround for setting api-key https://github.com/jenkinsci/configuration-as-code-plugin/issues/1830
+def apiToken=System.getenv().getOrDefault("API_TOKEN","110123456789abcdef0123456789abcdef")
+if ( ! apiToken.isEmpty()) {
+  def apiUser= System.getenv().getOrDefault("API_USER", "admin");
+  User.get(apiUser).getProperty(ApiTokenProperty.class).tokenStore.addFixedNewToken("auto-token", apiToken);
+}
+

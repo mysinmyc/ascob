@@ -43,8 +43,9 @@ public class RunControllerTest {
 		ResponseEntity<RunInfo> refreshResponse=testClients.testUserRestTemplate().getForEntity("/api/runs/"+submitResponseEntity.getBody().getRunId()+"/refresh",RunInfo.class);
 		assertTrue( refreshResponse.getStatusCode().is2xxSuccessful());
 		assertEquals(RunStatus.SUCCEDED, refreshResponse.getBody().getStatus());
-		
 
+		String output = testClients.testUserRestTemplate().getForObject("/api/runs/"+submitResponseEntity.getBody().getRunId()+"/output.txt",String.class);
+		assertEquals("Dummy output", output);
 	}
 
 

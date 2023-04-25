@@ -1,16 +1,18 @@
 package ascob.impl.backend;
 
+import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import ascob.backend.BackendOutputWriter;
 import org.springframework.stereotype.Component;
 
 import ascob.api.JobSpec;
 import ascob.backend.BackendRunStatus;
 
 @Component
-public class DummyBackend extends ExecutionBackendBase  {
+public class DummyBackend extends ExecutionBackendBase implements BackendOutputWriter {
 	
 	static AtomicLong counter = new AtomicLong();
 	
@@ -31,4 +33,8 @@ public class DummyBackend extends ExecutionBackendBase  {
 		return BackendRunStatus.SUCCEDED;
 	}
 
+
+	public void writeOutputInto(Map<String,String> backendRunId, OutputStream outputStream) throws Exception {
+		outputStream.write(new String("Dummy output").getBytes());
+	}
 }

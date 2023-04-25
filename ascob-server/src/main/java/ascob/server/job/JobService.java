@@ -1,5 +1,6 @@
 package ascob.server.job;
 
+import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -104,5 +105,10 @@ public class JobService {
 			}
 		}
 		return ! activeRuns.isEmpty();
+	}
+
+	public void writeRunOutputInto(Long runId, OutputStream outputStream) throws ExecutionBackendException {
+		InternalRun run = jobStore.getRunById(runId);
+		executionService.writeOutputInto(run.getBackendRunId(), outputStream );
 	}
 }

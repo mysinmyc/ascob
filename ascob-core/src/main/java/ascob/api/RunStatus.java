@@ -8,7 +8,8 @@ public enum RunStatus {
 	IN_DOUBT(false,true),
 	RUNNING(true,false),
 	SUCCEDED(false,true),
-	FAILED(false,true);
+	FAILED(false,true),
+	ABORTED(false,true);
 	
 	boolean running;
 	boolean finalState;
