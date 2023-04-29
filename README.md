@@ -12,13 +12,15 @@ E' studiato per porsi come frontend di portali di automazione custom:
 
 
 ## Da implementare
-- documentazione
-- controllo job (cancel,retry)
-- gestione output
-- sottomissione file
-- hook per consentire ai backend di aggiornare lo stato dei job  e per ottenere i file passati in input al job
-- polling asincrono stato job sui backend
-
+- [ ] documentazione
+- [x] stop job
+- [ ] retry job
+- [x] gestione output
+- [ ] sottomissione file
+- [x] hook per consentire ai backend di aggiornare lo stato dei job 
+- [ ] hook per consentire ai backend di acquisire file passati in input al job
+- [x] polling asincrono stato job sui backend
+- [ ] security
 
 
 
