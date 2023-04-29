@@ -3,7 +3,9 @@ package ascob.server.job;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
+import ascob.server.util.UnsafeConsumer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -70,7 +72,7 @@ public class JobService {
 				try {
 					BackendRunId backendRunId = executionService.submit(jobSpec);
 					run.setBackendRunId(backendRunId);
-					run.setMonitored(backendRunId !=null);
+					run.setMonitored(executionService.isMonitorable(backendRunId));
 					run.setStatus(RunStatus.SUBMITTED);
 					log.info("job submitted {} ",run);
 				} catch (ExecutionBackendException e) {
@@ -110,5 +112,25 @@ public class JobService {
 	public void writeRunOutputInto(Long runId, OutputStream outputStream) throws ExecutionBackendException {
 		InternalRun run = jobStore.getRunById(runId);
 		executionService.writeOutputInto(run.getBackendRunId(), outputStream );
+	}
+
+
+	protected <X extends Throwable> void updateRunByWebhookId(String webHookId, UnsafeConsumer<InternalRun,X> consumer) throws X {
+		InternalRun internalRun = jobStore.getRunByWebhookId(webHookId);
+		consumer.accept(internalRun);
+		jobStore.updateRun(internalRun);
+	}
+
+	public void updateRunStatusByWebhookId(String webHookId, RunStatus runStatus) {
+		updateRunByWebhookId(webHookId, (r)->r.setStatus(runStatus));
+	}
+
+	public void updateRunBackendIdenficationKeysByWebhookId(String webHookId, Map<String,String> identificationKeys) throws  ExecutionBackendException{
+		updateRunByWebhookId(webHookId, (r)->{
+			BackendRunId runId = r.getBackendRunId();
+			BackendRunId newRunId = executionService.updateIdentificationKeys(runId, identificationKeys);
+			r.setBackendRunId(newRunId);
+			r.setMonitored(executionService.isMonitorable(newRunId));
+		});
 	}
 }

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import ascob.backend.BackendIdentificationKeysUpdater;
 import org.springframework.stereotype.Component;
 
 import ascob.api.JobSpec;
@@ -11,7 +12,7 @@ import ascob.backend.BackendRunStatus;
 import ascob.backend.ExecutionBackend;
 
 @Component
-public class TestBackend  implements ExecutionBackend{
+public class TestBackend  implements ExecutionBackend, BackendIdentificationKeysUpdater {
 
 	@Override
 	public String getId() {
@@ -30,7 +31,7 @@ public class TestBackend  implements ExecutionBackend{
 		}
 		HashMap<String,String> ids = new HashMap<>();
 		ids.put("id", UUID.randomUUID().toString());
-		ids.put("status", BackendRunStatus.SUCCEDED.toString());
+		ids.put("status", jobSpec.getLabelValueOr("status",  BackendRunStatus.SUCCEDED.toString()));
 		return ids;
 	}
 
@@ -43,4 +44,8 @@ public class TestBackend  implements ExecutionBackend{
 		return BackendRunStatus.valueOf(status);
 	}
 
+	@Override
+	public Map<String, String> updateIdentificationKeys(Map<String, String> newIdentificationKeys, Map<String, String> oldIdentificationKeys) throws Exception {
+		return newIdentificationKeys;
+	}
 }

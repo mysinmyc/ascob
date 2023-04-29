@@ -1,6 +1,8 @@
 package ascob.impl.backend.jenkins;
 
 import ascob.api.JobSpec;
+import ascob.backend.BackendIdentificationKeysUpdater;
+import ascob.backend.BackendJobStoppable;
 import ascob.backend.BackendOutputWriter;
 import ascob.backend.BackendRunStatus;
 import ascob.impl.backend.ExecutionBackendBase;
@@ -18,7 +20,7 @@ import java.util.Map;
 
 @ConditionalOnProperty(matchIfMissing = false, name= "jenkins.enabled", havingValue = "true")
 @Component
-public class JenkinsBackend extends ExecutionBackendBase implements BackendOutputWriter {
+public class JenkinsBackend extends ExecutionBackendBase implements BackendOutputWriter, BackendIdentificationKeysUpdater, BackendJobStoppable {
 
 	@Value("${jenkins.optimisticBuildId:true}")
 	boolean optimisticBuildId;
@@ -50,7 +52,7 @@ public class JenkinsBackend extends ExecutionBackendBase implements BackendOutpu
 		identificationKeys.put(JenkinsIdentificationParameters.INSTANCE, jenkinsInstance);
 		identificationKeys.put(JenkinsIdentificationParameters.PROJECT_NAME, projectName);
 		if (optimisticBuildId) {
-			Thread.sleep(200);
+			Thread.sleep(500);
 			if (nextBuildId.equals( client.getLastBuildId(projectName))) {
 				identificationKeys.put(JenkinsIdentificationParameters.BUILD_ID, nextBuildId);
 			}
@@ -90,4 +92,39 @@ public class JenkinsBackend extends ExecutionBackendBase implements BackendOutpu
 		client.writeBuildOutputInto(identificationKeys.get(JenkinsIdentificationParameters.PROJECT_NAME), getBuildId(identificationKeys),outputStream);
 	}
 
+	@Override
+	public boolean isMonitorable(Map<String, String> identificationKeys) {
+		return identificationKeys !=null &&
+				identificationKeys.containsKey(JenkinsIdentificationParameters.BUILD_ID) &&
+				identificationKeys.containsKey(JenkinsIdentificationParameters.PROJECT_NAME) &&
+				identificationKeys.containsKey(JenkinsIdentificationParameters.INSTANCE);
+	}
+
+	@Override
+	public Map<String,String> updateIdentificationKeys(Map<String, String> newIdentificationKeys, Map<String, String> oldIdentificationKeys) throws Exception {
+		String projectName=oldIdentificationKeys.get(JenkinsIdentificationParameters.PROJECT_NAME);
+		if (!projectName.equals(newIdentificationKeys.get(JenkinsIdentificationParameters.PROJECT_NAME))) {
+			throw new Exception("Cannot change project");
+		}
+		String oldBuildId=oldIdentificationKeys.get(JenkinsIdentificationParameters.BUILD_ID);
+		if (oldBuildId !=null && ! oldBuildId.isEmpty()) {
+			throw new Exception("BUILD_ID already set");
+		}
+		String newBuildId=newIdentificationKeys.get(JenkinsIdentificationParameters.BUILD_ID);
+		if ( newBuildId == null || newBuildId.isEmpty()) {
+			throw new Exception("missing BUILD_ID");
+		}
+		Map<String,String> result=new HashMap<>();
+		result.put(JenkinsIdentificationParameters.BUILD_ID,newBuildId);
+		result.put(JenkinsIdentificationParameters.PROJECT_NAME,projectName);
+		result.put(JenkinsIdentificationParameters.INSTANCE,oldIdentificationKeys.get(JenkinsIdentificationParameters.INSTANCE));
+		return result;
+	}
+
+	@Override
+	public void stopRun(Map<String, String> identificationKeys) throws Exception {
+		String JenkinsInstance = identificationKeys.get(JenkinsIdentificationParameters.INSTANCE);
+		JenkinsClient client = JenkinsClientManager.getClientByName(JenkinsInstance);
+		client.abortBuild(identificationKeys.get(JenkinsIdentificationParameters.PROJECT_NAME), getBuildId(identificationKeys));
+	}
 }

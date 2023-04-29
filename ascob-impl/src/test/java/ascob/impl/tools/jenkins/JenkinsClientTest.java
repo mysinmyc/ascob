@@ -19,8 +19,7 @@ import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 @ActiveProfiles("testjenkins")
@@ -73,6 +72,29 @@ public class JenkinsClientTest {
         }
         BuildResult jobKoBuildResult = jenkinsClient.getBuildResult("jobKo", jobKoBuildId);
         assertEquals(BuildResult.FAILURE, jobKoBuildResult);
+    }
+
+    @Test
+    public void testAbort (@Autowired JenkinsClientManager JenkinsClientManager) throws InterruptedException, IOException {
+
+        JenkinsClient jenkinsClient = JenkinsClientManager.getClientByName("default");
+
+        Map<String,String> parameters = new HashMap<>();
+        parameters.put("seconds", "500");
+        jenkinsClient.buildWithParameters("sleep", parameters);
+        Thread.sleep(500);
+        String jobBuildId = jenkinsClient.getLastBuildId("sleep");
+
+        BuildResult jobBuildResult = jenkinsClient.getBuildResult("sleep", jobBuildId);
+        assertNull(jobBuildResult);
+
+        jenkinsClient.abortBuild("sleep", jobBuildId);
+        for ( int i=0;i<100 && jenkinsClient.getBuildResult("sleep", jobBuildId)==null;i++) {
+            Thread.sleep(500);
+        }
+        jobBuildResult = jenkinsClient.getBuildResult("sleep", jobBuildId);
+        assertEquals(BuildResult.ABORTED, jobBuildResult);
+
     }
 
     @Configuration

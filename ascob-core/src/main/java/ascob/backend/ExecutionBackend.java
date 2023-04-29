@@ -15,4 +15,7 @@ public interface ExecutionBackend {
 	
 	BackendRunStatus getStatus(Map<String,String> identificationKeys) throws Exception;
 
+	default boolean isMonitorable(Map<String,String> identificationKeys) {
+		return identificationKeys!=null && ! identificationKeys.isEmpty();
+	}
 }

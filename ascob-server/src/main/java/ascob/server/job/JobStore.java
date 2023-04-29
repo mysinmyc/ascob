@@ -2,6 +2,7 @@ package ascob.server.job;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Component;
 
@@ -18,7 +19,7 @@ public class JobStore {
 
 	@PersistenceContext
 	EntityManager entityManager;
-	
+
 	@Transactional(TxType.REQUIRES_NEW)
 	public InternalRun newRun(JobSpec jobSpec) {
 		InternalRun run = new InternalRun();
@@ -27,25 +28,35 @@ public class JobStore {
 		run.setDefinedTime(LocalDateTime.now());
 		run.setDescription(jobSpec.getDescription());
 		run.setSubmitter(jobSpec.getSubmitter());
+		run.setWebhookId(UUID.randomUUID().toString());
 		entityManager.persist(run);
 		return run;
 	}
-	
+
 	public InternalRun getRunById(Long runId) {
 		return entityManager.find(InternalRun.class,runId);
 	}
-	
+
 	@Transactional(TxType.REQUIRES_NEW)
 	public void updateRun(InternalRun run) {
+		if (run.getStatus() != null && run.getStatus().isFinalState()) {
+			run.setWebhookId(null);
+		}
 		entityManager.merge(run);
 	}
-	
+
 	static final List<RunStatus>  ACTIVE_STATUSES = List.of(RunStatus.values()).stream().filter(s ->! s.isFinalState()).toList();
-			
+
 	public List<InternalRun> getActiveMonitoredJobs() {
 		TypedQuery<InternalRun> runsQuery= entityManager.createQuery("from InternalRun where monitored=:monitored and status in (:statuses)", InternalRun.class);
 		runsQuery.setParameter("monitored", Boolean.TRUE);
 		runsQuery.setParameter("statuses", ACTIVE_STATUSES);
 		return runsQuery.getResultList();
+	}
+
+	public InternalRun getRunByWebhookId(String webhookId) {
+		TypedQuery<InternalRun> runsQuery= entityManager.createQuery("from InternalRun where webhookId=:webhookId", InternalRun.class);
+		runsQuery.setParameter("webhookId", webhookId);
+		return runsQuery.getSingleResult();
 	}
 }

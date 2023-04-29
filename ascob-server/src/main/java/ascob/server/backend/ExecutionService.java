@@ -1,16 +1,14 @@
 package ascob.server.backend;
 
-import ascob.backend.BackendOutputWriter;
+import ascob.backend.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import ascob.api.JobSpec;
 import ascob.api.Labels;
-import ascob.backend.BackendRunId;
-import ascob.backend.BackendRunStatus;
-import ascob.backend.ExecutionBackend;
 
 import java.io.OutputStream;
+import java.util.Map;
 
 @Component
 public class ExecutionService {
@@ -76,5 +74,27 @@ public class ExecutionService {
 		} catch (Exception e) {
 			throw new ExecutionBackendException(e);
 		}
+	}
+
+	public BackendRunId updateIdentificationKeys(BackendRunId backendRunId, Map<String,String> identificationKeys) throws ExecutionBackendException {
+		ExecutionBackend backend = getBackendForRun(backendRunId);
+		try {
+			if ( backend instanceof BackendIdentificationKeysUpdater) {
+				Map<String,String> newIdentificationKeys=((BackendIdentificationKeysUpdater)backend).updateIdentificationKeys(identificationKeys, backendRunId.getIdentificationKeys());
+				BackendRunId newBackendRunId = new BackendRunId();
+				newBackendRunId.setBackendId(backendRunId.getBackendId());
+				newBackendRunId.setIdentificationKeys(newIdentificationKeys);
+				return newBackendRunId;
+			} else {
+				throw new Exception("Backend "+backend+" doesn't allow to set identification keys");
+			}
+		} catch (Exception e) {
+			throw new ExecutionBackendException(e);
+		}
+	}
+
+	public boolean isMonitorable(BackendRunId backendRunId) throws ExecutionBackendException{
+		ExecutionBackend backend = getBackendForRun(backendRunId);
+		return backend.isMonitorable(backendRunId.getIdentificationKeys());
 	}
 }

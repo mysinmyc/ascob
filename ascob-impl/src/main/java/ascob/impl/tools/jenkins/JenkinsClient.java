@@ -124,4 +124,15 @@ public class JenkinsClient {
         }
     }
 
+    public void abortBuild(String project, String buildId) {
+        abortBuild(project,buildId,AbortMode.stop);
+    }
+    public void abortBuild(String project, String buildId, AbortMode abortMode) {
+        Map<String,String> uriVariables = new HashMap<>();
+        uriVariables.put("project", project);
+        uriVariables.put("buildId",buildId);
+        uriVariables.put("abortMode", abortMode.toString());
+        restTemplate.postForObject(url + "/job/{project}/{buildId}/{abortMode}",null,
+                Object.class,uriVariables);
+    }
 }

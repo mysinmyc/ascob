@@ -68,7 +68,6 @@
 		</plugins>
 	</build>
 	<modules>
-		<module>ascob-client</module>
 		<module>ascob-server</module>
 		<module>ascob-impl</module>
 		<module>ascob-core</module>
