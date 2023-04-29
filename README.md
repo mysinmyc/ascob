@@ -16,11 +16,11 @@ E' studiato per porsi come frontend di portali di automazione custom:
 - [x] stop job
 - [ ] retry job
 - [x] gestione output
-- [ ] sottomissione file
-- [x] hook per consentire ai backend di aggiornare lo stato dei job 
+- [x] hook per consentire ai backend di aggiornare lo stato dei job
+- [ ] sottomissione file- 
 - [ ] hook per consentire ai backend di acquisire file passati in input al job
 - [x] polling asincrono stato job sui backend
-- [ ] security
+- [x] security
 
 
 

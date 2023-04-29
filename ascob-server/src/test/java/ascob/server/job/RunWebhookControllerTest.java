@@ -11,12 +11,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.web.client.RestClientException;
 
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @ActiveProfiles("webtest")
@@ -37,7 +38,7 @@ public class RunWebhookControllerTest {
         SubmitRequest submitRequest = new SubmitRequest();
         submitRequest.setJobSpec(JobSpec.builder("test").withDescription("test")
                 .withLabel("status", "SUBMITTED").build());
-        ResponseEntity<SubmitResponse> submitResponseEntity = testClients.testUserRestTemplate().postForEntity("/api/runs", submitRequest, SubmitResponse.class);
+        ResponseEntity<SubmitResponse> submitResponseEntity = testClients.withRootToken().postForEntity("/api/runs", submitRequest, SubmitResponse.class);
 
         Long runId =submitResponseEntity.getBody().getRunId();
 
@@ -51,7 +52,10 @@ public class RunWebhookControllerTest {
         Map<String,String> newIdentificationKeys=new HashMap<>();
         newIdentificationKeys.put("testkey", "testvalue");
         updateRunRequest.setIdentificationKeys(newIdentificationKeys);
-        ResponseEntity<Object> updateRunResponseEntity = testClients.testUserRestTemplate().postForEntity("/api/webhooks/runs/"+webhookId, updateRunRequest, Object.class);
+
+        assertThrows(RestClientException.class, ()->testClients.withoutPrivilegesToken().postForObject("/api/webhooks/runs/"+webhookId, updateRunRequest, Object.class));
+
+        ResponseEntity<Object> updateRunResponseEntity = testClients.withWebhookToken().postForEntity("/api/webhooks/runs/"+webhookId, updateRunRequest, Object.class);
 
         assertTrue(updateRunResponseEntity.getStatusCode().is2xxSuccessful());
         assertEquals(RunStatus.SUCCEDED, jobStore.getRunById(runId).getStatus() );

@@ -1,6 +1,9 @@
 package ascob.server.backend;
 
-@SuppressWarnings("serial")
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.ResponseStatus;
+
+@ResponseStatus(value = HttpStatus.INTERNAL_SERVER_ERROR, reason = "Backend exception")
 public class ExecutionBackendException extends Exception{
 
 	public ExecutionBackendException() {
