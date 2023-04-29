@@ -39,7 +39,7 @@ docker run -d --rm -p8081:8081 ascob
 - Sottomissione job dummy
 
 ```
-curl  --user "user:ascob" -X POST http://localhost:8081/api/runs -d '{ "jobSpec": { "description": "dummy", "labels":{"_execution_backend_id":"dummyBackend"}} }' -H "content-type: application/json"
+curl  -H "X-Api-Token: rootToken"  -X POST http://localhost:8081/api/runs -d '{ "jobSpec": { "description": "dummy", "labels":{"_execution_backend_id":"dummyBackend"}} }' -H "content-type: application/json"
 ```
 
 Esempio Risposta:
@@ -54,7 +54,7 @@ Esempio Risposta:
 - Job Info
 
 ```
-curl  --user "user:ascob" http://localhost:8081/api/runs/1
+curl  -H "X-Api-Token: rootToken" http://localhost:8081/api/runs/1
 ```
 
 Esempio risposta
