@@ -10,10 +10,12 @@ import ascob.server.backend.ExecutionBackendException;
 import ascob.server.backend.ExecutionService;
 import ascob.server.lock.LockManager;
 import ascob.server.util.UnsafeConsumer;
+import jakarta.persistence.NoResultException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -186,15 +188,25 @@ public class JobService {
 		if (!internalRun.getStatus().equals(RunStatus.DEFINED)) {
 			throw new RuntimeException("Invalid job status: "+internalRun.getStatus());
 		}
-		fileStore.store("/runs/"+runId+"/"+fileId,inputStream);
+		if (internalRun.getParentId()!=null) {
+			throw new RuntimeException("Cannot add files to child jobs");
+		}
+		String filePath="/runs/"+runId+"/"+fileId;
+		fileStore.store(filePath,inputStream);
+		jobStore.addFileReference(internalRun,fileId,filePath);
 	}
 
-	public void writeFileIntoByWebhookId(String webHookId, String fileId, OutputStream outputStream) throws IOException {
+	public void downloadFileIntoByWebhookId(String webHookId, String fileId, OutputStream outputStream) throws IOException {
 		InternalRun internalRun = jobStore.getRunByWebhookId(webHookId);
 		if (internalRun == null) {
 			throw new JobNotFoundException();
 		}
-		fileStore.retrieveInto("/runs/"+internalRun.getId()+"/"+fileId,outputStream);
+		try {
+			String filePath = jobStore.getFileReference(internalRun, fileId).getFilePath();
+			fileStore.retrieveInto("/runs/" + internalRun.getId() + "/" + fileId, outputStream);
+		} catch ( NoResultException e) {
+			throw new FileNotFoundException();
+		}
 	}
 
 

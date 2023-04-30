@@ -68,5 +68,16 @@ public class JobWithFileTest {
         assertTrue(downloadedFileEntity.getStatusCode().is2xxSuccessful());
         assertArrayEquals(testFile.getContentAsByteArray(),  downloadedFileEntity.getBody());
 
+        ResponseEntity<SubmitResponse> resubmitResponse =testClients.withJobManagerToken().getForEntity("/api/runs/"+submitResponseEntity.getBody().getRunId()+"/resubmit?submitter=user2",SubmitResponse.class);
+        assertTrue( submitResponseEntity.getStatusCode().is2xxSuccessful());
+
+        String resubmitWebhookId = jobStore.getRunById(submitResponseEntity.getBody().getRunId()).getWebhookId();
+
+        ResponseEntity<byte[]> resubmitDownloadedFileEntity = testClients.withWebhookToken().getForEntity("/api/webhooks/runs/"+resubmitWebhookId+"/files/file1",
+                byte[].class);
+
+        assertTrue(resubmitDownloadedFileEntity.getStatusCode().is2xxSuccessful());
+        assertArrayEquals(testFile.getContentAsByteArray(),  resubmitDownloadedFileEntity.getBody());
+
     }
 }

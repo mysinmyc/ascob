@@ -37,6 +37,6 @@ public class RunWebhookController {
         @RequestMapping(method=RequestMethod.GET, path = "/{webhookId}/files/{fileId}")
         public void getFile(@PathVariable("webhookId") String webhookId, @PathVariable("fileId") String fileId, HttpServletResponse response, Authentication authentication) throws ExecutionBackendException, IOException, NotAuthorizedException {
                 securityAssertionService.assertAuthorized(authentication, Permission.webhook_get_files);
-                jobService.writeFileIntoByWebhookId(webhookId, fileId, response.getOutputStream());
+                jobService.downloadFileIntoByWebhookId(webhookId, fileId, response.getOutputStream());
         }
 }

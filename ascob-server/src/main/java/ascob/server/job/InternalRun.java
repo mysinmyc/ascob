@@ -1,9 +1,9 @@
 package ascob.server.job;
 
 
+import ascob.backend.BackendRunId;
 import ascob.job.JobSpec;
 import ascob.job.RunStatus;
-import ascob.backend.BackendRunId;
 import jakarta.persistence.*;
 import org.springframework.context.annotation.Lazy;
 
@@ -167,6 +167,5 @@ public class InternalRun {
     public String toString() {
         return "[" + this.getClass().getName() + " id:" + id + " parentId:"+parentId+" status:" + status + " runnable: "+runnable+"]";
     }
-
 
 }
