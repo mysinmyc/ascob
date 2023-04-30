@@ -21,7 +21,7 @@ E' studiato per porsi come frontend di portali di automazione custom:
 - [x] polling asincrono stato job sui backend
 - [x] security
 - [x] ricerca job
-- [x] retry job (by resubmitting)
+- [x] retry job (by resubmission)
 - [ ] logging ed error handling
 - [ ] documentazione
 - [ ] swagger api
