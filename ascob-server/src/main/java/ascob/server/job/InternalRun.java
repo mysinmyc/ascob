@@ -16,6 +16,8 @@ public class InternalRun {
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     Long id;
 
+    Long parentId;
+
     @Lob
     @Lazy
     @Convert(converter = JobSpecConverter.class)
@@ -153,9 +155,17 @@ public class InternalRun {
         this.runtimeSpec = runtimeSpec;
     }
 
+    public Long getParentId() {
+        return parentId;
+    }
+
+    public void setParentId(Long parentId) {
+        this.parentId = parentId;
+    }
+
     @Override
     public String toString() {
-        return "[" + this.getClass().getName() + " id:" + id + " status:" + status + " runnable: "+runnable+"]";
+        return "[" + this.getClass().getName() + " id:" + id + " parentId:"+parentId+" status:" + status + " runnable: "+runnable+"]";
     }
 
 

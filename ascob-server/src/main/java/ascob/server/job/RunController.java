@@ -36,7 +36,14 @@ public class RunController {
 		response.setRunId(runId);
 		return response;
 	}
-	
+	@RequestMapping(method=RequestMethod.GET, path = "/{runId}/resubmit")
+	public SubmitResponse resubmit(@PathVariable("runId") Long sourceRunId, @RequestParam("submitter") String submitter, Authentication authentication) throws NotAuthorizedException, InvalidJobSpecException {
+		securityAssertionService.assertAuthorized(authentication, Permission.job_run_manual_resubmit);
+		Long runId=jobService.resubmitBy(sourceRunId, submitter);
+		SubmitResponse response = new SubmitResponse();
+		response.setRunId(runId);
+		return response;
+	}
 	
 	@RequestMapping(method=RequestMethod.GET, path = "/{runId}")
 	public RunInfo getRunInfo(@PathVariable("runId") Long runId, Authentication authentication) throws NotAuthorizedException {

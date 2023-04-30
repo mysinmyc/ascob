@@ -13,6 +13,7 @@ public class RunInfoFactory {
 		runInfo.setStatus(run.getStatus());
 		runInfo.setSubmissionTime(run.getSubmissionTime());
 		runInfo.setSubmitter(run.getSubmitter());
+		runInfo.setParentId(run.getParentId());
 		return runInfo;
 	}
 }

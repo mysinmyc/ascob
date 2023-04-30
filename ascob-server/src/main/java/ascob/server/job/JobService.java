@@ -48,6 +48,20 @@ public class JobService {
 		return run.getId();
 	}
 
+	public Long resubmitBy(Long sourceRunId,String submitter) throws  InvalidJobSpecException {
+		InternalRun sourceRun = jobStore.getRunById(sourceRunId);
+		if (sourceRun == null) {
+			throw new JobNotFoundException();
+		}
+		InternalRun resubmittedRun = jobStore.duplicateRun(sourceRun,submitter);
+		try {
+			refresh(resubmittedRun);
+		} catch (ExecutionBackendException e) {
+
+		}
+		return resubmittedRun.getId();
+	}
+
 	public boolean start(Long runId) {
 		InternalRun run = jobStore.getRunById(runId);
 		if (run == null) {
@@ -189,7 +203,7 @@ public class JobService {
 
 	public List<RunInfo> search(RunSearchFilters filters, int maxResults) {
 		return jobStore.searchRunByConditions(
-			filters,maxResults == 0 || maxResults> runSearchResultLimit ? runSearchResultLimit : maxResults).stream().map(RunInfoFactory::createRunInfo).toList();
+				filters,maxResults == 0 || maxResults> runSearchResultLimit ? runSearchResultLimit : maxResults).stream().map(RunInfoFactory::createRunInfo).toList();
 	}
 
 }

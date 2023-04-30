@@ -21,10 +21,11 @@ E' studiato per porsi come frontend di portali di automazione custom:
 - [x] polling asincrono stato job sui backend
 - [x] security
 - [x] ricerca job
+- [x] retry job (by resubmitting)
 - [ ] logging ed error handling
 - [ ] documentazione
 - [ ] swagger api
-- [ ] retry job
+
 
 
 ## Compilazione ed esecuzione su container

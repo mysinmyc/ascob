@@ -12,10 +12,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ActiveProfiles;
 
-import java.io.ByteArrayOutputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.StringBufferInputStream;
+import java.io.*;
 
 import static org.junit.Assert.*;
 
@@ -30,7 +27,7 @@ public class DatabaseFileStoreTest {
     public void testFileStore() throws IOException {
 
         String contentToStore="ciaomiaobau";
-        fileStore.store("file1", new StringBufferInputStream(contentToStore));
+        fileStore.store("file1", new ByteArrayInputStream(contentToStore.getBytes()));
 
 
         ByteArrayOutputStream contentRetrieved = new ByteArrayOutputStream();

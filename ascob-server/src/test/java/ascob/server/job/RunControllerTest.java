@@ -1,19 +1,13 @@
 package ascob.server.job;
 
+import ascob.job.*;
+import ascob.server.TestClients;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
-
-import ascob.job.JobSpec;
-import ascob.job.RunInfo;
-import ascob.job.RunStatus;
-import ascob.job.SubmitRequest;
-import ascob.job.SubmitResponse;
-import ascob.server.TestClients;
 import org.springframework.web.client.RestClientException;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -58,4 +52,23 @@ public class RunControllerTest {
 	}
 
 
+	@Test
+	public void testResubmit() {
+
+		SubmitRequest submitRequest = new SubmitRequest();
+		submitRequest.setJobSpec(JobSpec.builder("user1").withDescription("dummy job").build());
+
+		ResponseEntity<SubmitResponse> submitResponseEntity =testClients.withJobManagerToken().postForEntity("/api/runs",submitRequest, SubmitResponse.class);
+		assertTrue(submitResponseEntity.getStatusCode().is2xxSuccessful());
+
+		ResponseEntity<SubmitResponse> resubmitResponse =testClients.withJobManagerToken().getForEntity("/api/runs/"+submitResponseEntity.getBody().getRunId()+"/resubmit?submitter=user2",SubmitResponse.class);
+		assertTrue( submitResponseEntity.getStatusCode().is2xxSuccessful());
+
+		ResponseEntity<RunInfo> getResubmittedRunInfoResponse =testClients.withJobManagerToken().getForEntity("/api/runs/"+resubmitResponse.getBody().getRunId(), RunInfo.class);
+		assertTrue( getResubmittedRunInfoResponse.getStatusCode().is2xxSuccessful());
+		assertEquals("user2", getResubmittedRunInfoResponse.getBody().getSubmitter());
+		assertEquals("dummy job", getResubmittedRunInfoResponse.getBody().getDescription());
+		assertEquals(submitResponseEntity.getBody().getRunId(), getResubmittedRunInfoResponse.getBody().getParentId());
+
+	}
 }

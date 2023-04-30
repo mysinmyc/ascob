@@ -22,6 +22,7 @@ public class SerializationUtil {
 		return GSON.fromJson(data, targetClass);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <T> T clone(T object) {
 		if (object==null) {
 			return null;

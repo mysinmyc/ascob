@@ -23,8 +23,8 @@ public class JobStore {
 	@PersistenceContext
 	EntityManager entityManager;
 
-	@Transactional(TxType.REQUIRES_NEW)
-	public InternalRun newRun(JobSpec jobSpec) throws InvalidJobSpecException {
+
+	private InternalRun buildRun(JobSpec jobSpec) throws InvalidJobSpecException {
 		InternalRun run = new InternalRun();
 		run.setStatus(RunStatus.DEFINED);
 		run.setJobSpec(jobSpec);
@@ -35,7 +35,23 @@ public class JobStore {
 		run.setRunnable(!jobSpec.isManualStart());
 		run.setRuntimeSpec(resolveVariables(run,jobSpec));
 		entityManager.persist(run);
+		return run;
+	}
 
+	@Transactional(TxType.REQUIRES_NEW)
+	public InternalRun newRun(JobSpec jobSpec) throws InvalidJobSpecException {
+		InternalRun run = buildRun(jobSpec);
+		entityManager.persist(run);
+		return run;
+	}
+
+	@Transactional(TxType.REQUIRES_NEW)
+	public InternalRun duplicateRun(InternalRun sourceRun, String submmitter) throws InvalidJobSpecException {
+		JobSpec jobSpec = SerializationUtil.clone(sourceRun.getJobSpec());
+		jobSpec.setSubmitter(submmitter);
+		InternalRun run = buildRun(jobSpec);
+		run.setParentId(sourceRun.getParentId()==null ? sourceRun.getId() : sourceRun.getParentId());
+		entityManager.persist(run);
 		return run;
 	}
 
@@ -44,7 +60,6 @@ public class JobStore {
 		if (jobSpecString.indexOf("%%")>-1) {
 			jobSpecString=jobSpecString.replaceAll("%%SUBMITTER%%", run.getSubmitter());
 			jobSpecString=jobSpecString.replaceAll("%%WEBHOOKID%%", run.getWebhookId());
-
 			if (jobSpecString.indexOf("%%")>-1) {
 				throw new InvalidJobSpecException(" Invalid variables %% in spec");
 			}

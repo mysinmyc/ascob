@@ -9,6 +9,8 @@ public class RunInfo {
 
 	Long id;
 
+	Long parentId;
+
 	RunStatus status;
 
 	String description;
@@ -82,4 +84,11 @@ public class RunInfo {
 		this.endTime = endTime;
 	}
 
+	public Long getParentId() {
+		return parentId;
+	}
+
+	public void setParentId(Long parentId) {
+		this.parentId = parentId;
+	}
 }
