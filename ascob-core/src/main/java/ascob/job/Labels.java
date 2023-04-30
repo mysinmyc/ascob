@@ -1,4 +1,4 @@
-package ascob.api;
+package ascob.job;
 
 public interface Labels {
 

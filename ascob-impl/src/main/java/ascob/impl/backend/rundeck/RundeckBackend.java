@@ -10,7 +10,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import ascob.api.JobSpec;
+import ascob.job.JobSpec;
 import ascob.backend.BackendRunStatus;
 import ascob.impl.backend.ExecutionBackendBase;
 import ascob.impl.tools.rundeck.RundeckClient;

@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import ascob.backend.BackendOutputWriter;
 import org.springframework.stereotype.Component;
 
-import ascob.api.JobSpec;
+import ascob.job.JobSpec;
 import ascob.backend.BackendRunStatus;
 
 @Component

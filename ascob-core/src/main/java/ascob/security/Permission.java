@@ -5,13 +5,18 @@ import java.util.Collection;
 
 public enum Permission {
     job_submit("job", true),
-    job_run_stop("job", false),
+    job_run_manual_start("job",true),
+    job_run_upload_files("job",true),
+    job_run_stop("job", true),
     job_run_read("job", false),
     job_run_output("job",false),
     job_run_refresh("job",false),
+    job_run_search("job",false),
     webhook_update_status("webhook", true),
     webhook_identification_keys("webhook", true),
+    webhook_get_files("webhook", false),
     security_token_write("security", true);
+
 
     String group;
     boolean write;

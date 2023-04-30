@@ -1,6 +1,6 @@
 package ascob.backend;
 
-import ascob.api.RunStatus;
+import ascob.job.RunStatus;
 
 public enum BackendRunStatus {
 	RUNNING,

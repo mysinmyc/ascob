@@ -1,9 +1,6 @@
 package ascob.server.job;
 
-import ascob.api.JobSpec;
-import ascob.api.RunStatus;
-import ascob.api.job.SubmitRequest;
-import ascob.api.job.SubmitResponse;
+import ascob.job.*;
 import ascob.server.TestClients;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

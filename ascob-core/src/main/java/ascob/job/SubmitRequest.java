@@ -1,6 +1,4 @@
-package ascob.api.job;
-
-import ascob.api.JobSpec;
+package ascob.job;
 
 public class SubmitRequest {
 

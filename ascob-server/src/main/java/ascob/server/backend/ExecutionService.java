@@ -4,8 +4,8 @@ import ascob.backend.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import ascob.api.JobSpec;
-import ascob.api.Labels;
+import ascob.job.JobSpec;
+import ascob.job.Labels;
 
 import java.io.OutputStream;
 import java.util.Map;

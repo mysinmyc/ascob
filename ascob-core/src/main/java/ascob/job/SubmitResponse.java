@@ -1,4 +1,4 @@
-package ascob.api.job;
+package ascob.job;
 
 public class SubmitResponse {
 

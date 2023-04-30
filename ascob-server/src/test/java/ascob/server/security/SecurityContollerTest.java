@@ -1,5 +1,7 @@
 package ascob.server.security;
 
+import ascob.security.CreateTokenRequest;
+import ascob.security.CreateTokenResponse;
 import ascob.security.*;
 import ascob.server.TestClients;
 import org.junit.jupiter.api.Test;
@@ -8,8 +10,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.web.client.RestClientException;
 
-import java.security.Permissions;
-import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;

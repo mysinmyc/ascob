@@ -1,7 +1,7 @@
 package ascob.impl.backend.rundeck;
 
-import ascob.api.JobSpec;
-import ascob.api.JobSpecBuilder;
+import ascob.job.JobSpec;
+import ascob.job.JobSpecBuilder;
 import ascob.backend.BackendRunStatus;
 import ascob.impl.tools.rundeck.RundeckClient;
 import ascob.impl.tools.rundeck.RundeckTestContainerBuilder;

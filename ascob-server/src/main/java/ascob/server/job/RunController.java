@@ -1,23 +1,20 @@
 package ascob.server.job;
 
+import ascob.job.RunInfo;
+import ascob.job.SubmitRequest;
+import ascob.job.SubmitResponse;
 import ascob.security.Permission;
+import ascob.server.backend.ExecutionBackendException;
 import ascob.server.security.NotAuthorizedException;
 import ascob.server.security.SecurityAssertionService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
-
-import ascob.api.RunInfo;
-import ascob.api.job.SubmitRequest;
-import ascob.api.job.SubmitResponse;
-import ascob.server.backend.ExecutionBackendException;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
+import java.io.InputStream;
 
 @RestController
 @RequestMapping("/api/runs")
@@ -29,8 +26,11 @@ public class RunController {
 	JobService jobService;
 	
 	@RequestMapping(method=RequestMethod.POST)
-	public SubmitResponse submit (@RequestBody SubmitRequest request, Authentication authentication) throws ExecutionBackendException, NotAuthorizedException {
+	public SubmitResponse submit(@RequestBody SubmitRequest request, Authentication authentication) throws ExecutionBackendException, NotAuthorizedException {
 		securityAssertionService.assertAuthorized(authentication, Permission.job_submit);
+		if (request.getJobSpec().isManualStart()) {
+			securityAssertionService.assertAuthorized(authentication, Permission.job_run_manual_start);
+		}
 		Long runId=jobService.submit(request.getJobSpec());
 		SubmitResponse response = new SubmitResponse();
 		response.setRunId(runId);
@@ -42,6 +42,23 @@ public class RunController {
 	public RunInfo getRunInfo(@PathVariable("runId") Long runId, Authentication authentication) throws NotAuthorizedException {
 		securityAssertionService.assertAuthorized(authentication, Permission.job_run_read);
 		return jobService.getRunInfo(runId);
+	}
+
+	@RequestMapping(method=RequestMethod.GET, path = "/{runId}/start")
+	public void start(@PathVariable("runId") Long runId, Authentication authentication) throws NotAuthorizedException {
+		securityAssertionService.assertAuthorized(authentication, Permission.job_run_manual_start);
+
+		if (!jobService.start(runId)) {
+			throw new RuntimeException("Job already started");
+		}
+	}
+
+	@RequestMapping(method=RequestMethod.POST,  path = "/{runId}/files/{fileId}")
+	public void upload(@PathVariable("runId") Long runId, @PathVariable("fileId") String fileId, HttpServletRequest request, Authentication authentication) throws NotAuthorizedException, IOException {
+		securityAssertionService.assertAuthorized(authentication, Permission.job_run_upload_files);
+		try (InputStream inputStream = request.getInputStream()) {
+			jobService.uploadFile(runId, fileId, inputStream);
+		}
 	}
 
 	@RequestMapping(method=RequestMethod.GET, path = "/{runId}/refresh")

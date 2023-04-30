@@ -1,6 +1,6 @@
 package ascob.server.job;
 
-import ascob.api.RunInfo;
+import ascob.job.RunInfo;
 
 public class RunInfoFactory {
 

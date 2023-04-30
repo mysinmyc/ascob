@@ -1,29 +1,36 @@
 package ascob.server.job;
 
+import ascob.backend.BackendRunId;
+import ascob.file.FileStore;
+import ascob.job.JobSpec;
+import ascob.job.RunInfo;
+import ascob.job.RunSearchFilters;
+import ascob.job.RunStatus;
+import ascob.server.backend.ExecutionBackendException;
+import ascob.server.backend.ExecutionService;
+import ascob.server.lock.LockManager;
+import ascob.server.util.UnsafeConsumer;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
+
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
-import ascob.server.util.UnsafeConsumer;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
-import ascob.api.JobSpec;
-import ascob.api.RunInfo;
-import ascob.api.RunStatus;
-import ascob.backend.BackendRunId;
-import ascob.server.backend.ExecutionBackendException;
-import ascob.server.backend.ExecutionService;
-import ascob.server.lock.LockManager;
-
 @Component
 public class JobService {
 
 	private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(JobService.class);
-	
+
 	@Autowired
 	JobStore jobStore;
+
+	@Autowired
+	FileStore fileStore;
 
 	@Autowired
 	ExecutionService executionService;
@@ -39,6 +46,23 @@ public class JobService {
 
 		}
 		return run.getId();
+	}
+
+	public boolean start(Long runId) {
+		InternalRun run = jobStore.getRunById(runId);
+		if (run == null) {
+			throw new JobNotFoundException();
+		}
+		if (! (run.getJobSpec().isManualStart() && run.getStatus().equals(RunStatus.DEFINED) && ! run.isRunnable() ) ) {
+			return false;
+		}
+		run.setRunnable(true);
+		jobStore.updateRun(run);
+		try {
+			refresh(run);
+		} catch (ExecutionBackendException e) {
+		}
+		return true;
 	}
 
 	public RunInfo getRunInfo(Long runId) {
@@ -62,7 +86,7 @@ public class JobService {
 		if (initialStatus.isFinalState()) {
 			return run;
 		}
-		if (!initialStatus.isRunning()) {
+		if (run.isRunnable() && !initialStatus.isRunning()) {
 			JobSpec jobSpec = run.getJobSpec();
 			if (!lockManager.acquireLocks(run.getId().toString(), jobSpec.getLocks())) {
 				run.setStatus(RunStatus.WAITING_LOCKS);
@@ -111,12 +135,18 @@ public class JobService {
 
 	public void writeRunOutputInto(Long runId, OutputStream outputStream) throws ExecutionBackendException {
 		InternalRun run = jobStore.getRunById(runId);
-		executionService.writeOutputInto(run.getBackendRunId(), outputStream );
+		if (run == null) {
+			throw new JobNotFoundException();
+		}
+		executionService.writeOutputInto(run.getBackendRunId(), outputStream);
 	}
 
 
 	protected <X extends Throwable> void updateRunByWebhookId(String webHookId, UnsafeConsumer<InternalRun,X> consumer) throws X {
 		InternalRun internalRun = jobStore.getRunByWebhookId(webHookId);
+		if (internalRun == null) {
+			throw new JobNotFoundException();
+		}
 		consumer.accept(internalRun);
 		jobStore.updateRun(internalRun);
 	}
@@ -133,4 +163,33 @@ public class JobService {
 			r.setMonitored(executionService.isMonitorable(newRunId));
 		});
 	}
+
+	public void uploadFile(Long runId, String fileId, InputStream inputStream) throws IOException {
+		InternalRun internalRun = jobStore.getRunById(runId);
+		if (internalRun == null) {
+			throw new JobNotFoundException();
+		}
+		if (!internalRun.getStatus().equals(RunStatus.DEFINED)) {
+			throw new RuntimeException("Invalid job status: "+internalRun.getStatus());
+		}
+		fileStore.store("/runs/"+runId+"/"+fileId,inputStream);
+	}
+
+	public void writeFileIntoByWebhookId(String webHookId, String fileId, OutputStream outputStream) throws IOException {
+		InternalRun internalRun = jobStore.getRunByWebhookId(webHookId);
+		if (internalRun == null) {
+			throw new JobNotFoundException();
+		}
+		fileStore.retrieveInto("/runs/"+internalRun.getId()+"/"+fileId,outputStream);
+	}
+
+
+	@Value("${run.search.resultLimit:20}")
+	int runSearchResultLimit;
+
+	public List<RunInfo> search(RunSearchFilters filters, int maxResults) {
+		return jobStore.searchRunByConditions(
+			filters,maxResults == 0 || maxResults> runSearchResultLimit ? runSearchResultLimit : maxResults).stream().map(RunInfoFactory::createRunInfo).toList();
+	}
+
 }

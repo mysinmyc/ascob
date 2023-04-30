@@ -1,18 +1,20 @@
 package ascob.server.job;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
-
-import org.springframework.stereotype.Component;
-
-import ascob.api.JobSpec;
-import ascob.api.RunStatus;
+import ascob.job.JobSpec;
+import ascob.job.RunSearchFilters;
+import ascob.job.RunStatus;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
+import jakarta.persistence.criteria.*;
 import jakarta.transaction.Transactional;
 import jakarta.transaction.Transactional.TxType;
+import org.springframework.stereotype.Component;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 @Component
 public class JobStore {
@@ -29,6 +31,7 @@ public class JobStore {
 		run.setDescription(jobSpec.getDescription());
 		run.setSubmitter(jobSpec.getSubmitter());
 		run.setWebhookId(UUID.randomUUID().toString());
+		run.setRunnable(!jobSpec.isManualStart());
 		entityManager.persist(run);
 		return run;
 	}
@@ -58,5 +61,44 @@ public class JobStore {
 		TypedQuery<InternalRun> runsQuery= entityManager.createQuery("from InternalRun where webhookId=:webhookId", InternalRun.class);
 		runsQuery.setParameter("webhookId", webhookId);
 		return runsQuery.getSingleResult();
+	}
+
+
+	public List<InternalRun> searchRunByConditions(RunSearchFilters filters, int maxResults) {
+		CriteriaBuilder criteriaBuilder=entityManager.getEntityManagerFactory().getCriteriaBuilder();
+		CriteriaQuery<InternalRun> criteriaQuery = criteriaBuilder.createQuery(InternalRun.class);
+		Root<InternalRun> root = criteriaQuery.from(InternalRun.class);
+		criteriaQuery.select(root);
+		List<Predicate> whereConditions = new ArrayList<>();
+		if (filters.getSubmitterFilter() != null && !filters.getSubmitterFilter().isEmpty()) {
+			whereConditions.add(criteriaBuilder.equal(root.get("submitter"), filters.getSubmitterFilter()));
+		}
+		if (filters.getStatusFilter() != null && filters.getStatusFilter().size()>0) {
+			whereConditions.add(root.get("status").in(filters.getStatusFilter()));
+		}
+		if (filters.getCreatedAfterFilter() != null) {
+			whereConditions.add(criteriaBuilder.greaterThan(root.get("definedTime"),filters.getCreatedAfterFilter()));
+		}
+		if (filters.getCreatedBeforeFilter() != null) {
+			whereConditions.add(criteriaBuilder.lessThan(root.get("definedTime"),filters.getCreatedBeforeFilter()));
+		}
+		if (whereConditions.size()>0) {
+			criteriaQuery.where(criteriaBuilder.and(whereConditions.toArray(new Predicate[]{})));
+		}
+		TypedQuery<InternalRun> query = entityManager.createQuery(criteriaQuery);
+		criteriaQuery.orderBy(criteriaBuilder.desc(root.get("id")));
+		if (maxResults>0) {
+			query.setMaxResults(maxResults);
+		}
+		return query.getResultList();
+	}
+
+	@Transactional(TxType.REQUIRES_NEW)
+	public void clear() {
+		CriteriaBuilder criteriaBuilder=entityManager.getEntityManagerFactory().getCriteriaBuilder();
+		CriteriaDelete<InternalRun> criteriaDelete = criteriaBuilder.createCriteriaDelete(InternalRun.class);
+		Root<InternalRun> root = criteriaDelete.from(InternalRun.class);
+
+		entityManager.createQuery(criteriaDelete).executeUpdate();
 	}
 }

@@ -1,8 +1,8 @@
 package ascob.server.job;
 
 
-import ascob.api.JobSpec;
-import ascob.api.RunStatus;
+import ascob.job.JobSpec;
+import ascob.job.RunStatus;
 import ascob.backend.BackendRunId;
 import jakarta.persistence.*;
 import org.springframework.context.annotation.Lazy;
@@ -23,6 +23,8 @@ public class InternalRun {
 
     RunStatus status;
 
+    Boolean runnable;
+
     @Lob
     @Convert(converter = BackendRunIdConverter.class)
     BackendRunId backendRunId;
@@ -38,7 +40,7 @@ public class InternalRun {
 
     LocalDateTime endTime;
 
-    Boolean monitored;
+    boolean monitored;
     String webhookId;
 
     public String getWebhookId() {
@@ -129,9 +131,18 @@ public class InternalRun {
         this.backendRunId = backendRunId;
     }
 
+    public boolean isRunnable() {
+        return runnable;
+    }
+
+    public void setRunnable(boolean runnable) {
+        this.runnable = runnable;
+    }
 
     @Override
     public String toString() {
-        return "[" + this.getClass().getName() + " id:" + id + " status:" + status + "]";
+        return "[" + this.getClass().getName() + " id:" + id + " status:" + status + " runnable: "+runnable+"]";
     }
+
+
 }

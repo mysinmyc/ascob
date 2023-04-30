@@ -1,11 +1,9 @@
 package ascob.impl.backend.jenkins;
 
-import ascob.api.JobSpec;
-import ascob.api.JobSpecBuilder;
+import ascob.job.JobSpec;
+import ascob.job.JobSpecBuilder;
 import ascob.backend.BackendRunStatus;
-import ascob.impl.tools.jenkins.BuildResult;
 import ascob.impl.tools.jenkins.JenkinsClient;
-import ascob.impl.tools.jenkins.JenkinsClientManager;
 import ascob.impl.tools.jenkins.JenkinsTestContainerBuilder;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -18,7 +16,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.GenericContainer;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,6 +79,45 @@ public class JenkinsBackendTest {
         assertEquals(BackendRunStatus.ABORTED,jenkinsBackend.getStatus(identifier));
 
     }
+
+
+    @Test
+    public void testMonitorable(@Autowired JenkinsBackend jenkinsBackend) throws Exception {
+
+        Map<String,String> identificationKeys = new HashMap<>();
+        assertFalse(jenkinsBackend.isMonitorable(identificationKeys));
+        identificationKeys.put(JenkinsIdentificationParameters.INSTANCE, "default");
+        identificationKeys.put(JenkinsIdentificationParameters.PROJECT_NAME, "project1");
+        identificationKeys.put(JenkinsIdentificationParameters.BUILD_ID, "1");
+
+        assertTrue(jenkinsBackend.isMonitorable(identificationKeys));
+
+    }
+
+
+    @Test
+    public void testUpdateIdentificationKeys(@Autowired JenkinsBackend jenkinsBackend) throws Exception {
+
+        Map<String,String> oldIdentificationKeys = new HashMap<>();
+        oldIdentificationKeys.put(JenkinsIdentificationParameters.PROJECT_NAME, "project1");
+        oldIdentificationKeys.put(JenkinsIdentificationParameters.INSTANCE, "default");
+
+        Map<String,String> newIdentificationKeys = new HashMap<>();
+        newIdentificationKeys.put(JenkinsIdentificationParameters.BUILD_ID,"1");
+        newIdentificationKeys.put(JenkinsIdentificationParameters.PROJECT_NAME, "project1");
+
+        Map<String,String> updatedKeys= jenkinsBackend.updateIdentificationKeys(newIdentificationKeys,oldIdentificationKeys);
+        assertEquals("project1", updatedKeys.get(JenkinsIdentificationParameters.PROJECT_NAME));
+        assertEquals("default",updatedKeys.get(JenkinsIdentificationParameters.INSTANCE));
+        assertEquals("1",updatedKeys.get(JenkinsIdentificationParameters.BUILD_ID));
+
+        assertThrows( Throwable.class, ()-> jenkinsBackend.updateIdentificationKeys(newIdentificationKeys,updatedKeys));
+
+        newIdentificationKeys.put(JenkinsIdentificationParameters.PROJECT_NAME, "project2");
+        assertThrows( Throwable.class, ()-> jenkinsBackend.updateIdentificationKeys(newIdentificationKeys,oldIdentificationKeys));
+
+    }
+
 
     @Configuration
     @ComponentScan(basePackageClasses = {JenkinsBackend.class, JenkinsClient.class})

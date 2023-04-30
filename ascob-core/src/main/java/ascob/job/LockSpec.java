@@ -1,4 +1,4 @@
-package ascob.api;
+package ascob.job;
 
 import java.util.ArrayList;
 import java.util.List;

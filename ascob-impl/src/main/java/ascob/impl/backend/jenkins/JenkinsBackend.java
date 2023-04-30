@@ -1,6 +1,6 @@
 package ascob.impl.backend.jenkins;
 
-import ascob.api.JobSpec;
+import ascob.job.JobSpec;
 import ascob.backend.BackendIdentificationKeysUpdater;
 import ascob.backend.BackendJobStoppable;
 import ascob.backend.BackendOutputWriter;

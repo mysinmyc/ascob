@@ -1,6 +1,4 @@
-package ascob.server.job;
-
-import ascob.api.RunStatus;
+package ascob.job;
 
 import java.util.Map;
 

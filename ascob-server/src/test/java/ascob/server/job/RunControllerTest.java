@@ -8,11 +8,11 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
 
-import ascob.api.JobSpec;
-import ascob.api.RunInfo;
-import ascob.api.RunStatus;
-import ascob.api.job.SubmitRequest;
-import ascob.api.job.SubmitResponse;
+import ascob.job.JobSpec;
+import ascob.job.RunInfo;
+import ascob.job.RunStatus;
+import ascob.job.SubmitRequest;
+import ascob.job.SubmitResponse;
 import ascob.server.TestClients;
 import org.springframework.web.client.RestClientException;
 
@@ -22,9 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @ActiveProfiles("webtest")
 public class RunControllerTest {
 
-	@LocalServerPort
-	Integer localServerPort;
-	
+
 	@Autowired
 	private TestClients testClients;
 

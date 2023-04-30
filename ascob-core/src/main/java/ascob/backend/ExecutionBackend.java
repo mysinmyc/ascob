@@ -1,9 +1,8 @@
 package ascob.backend;
 
-import java.io.OutputStream;
-import java.util.Map;
+import ascob.job.JobSpec;
 
-import ascob.api.JobSpec;
+import java.util.Map;
 
 public interface ExecutionBackend {
 

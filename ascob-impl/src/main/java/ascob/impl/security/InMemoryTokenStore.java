@@ -4,12 +4,14 @@ import ascob.security.*;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.security.Permissions;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+
 
 @ConditionalOnProperty(matchIfMissing = true, name= "security.tokenStore.inmemory.enabled", havingValue = "true")
 @Component
@@ -46,6 +48,10 @@ public class InMemoryTokenStore implements ApiTokenStore, ApiTokenValidator, Ini
         ApiTokenIdentity identity;
         LocalDateTime expiry;
         String token;
+
+        boolean isExpired() {
+            return expiry!=null && LocalDateTime.now().isAfter(expiry);
+        }
     }
     Map<String, InternalToken> tokens = new ConcurrentHashMap<>();
     Map<String,String> identifier2Tokens = new ConcurrentHashMap<>();
@@ -81,11 +87,47 @@ public class InMemoryTokenStore implements ApiTokenStore, ApiTokenValidator, Ini
         if (internalToken==null) {
             throw new InvalidTokenException();
         }
-        if (internalToken.expiry !=null && internalToken.expiry.isBefore(LocalDateTime.now())) {
+        if (internalToken.isExpired()) {
             tokens.remove(token);
             identifier2Tokens.remove(internalToken.identity.getIdentifier());
             throw new InvalidTokenException();
         }
         return internalToken.identity;
+    }
+
+
+    @Value("${security.tokenStore.cleaner.maxBatchSize:1000}")
+    int cleanerMaxBatchSize;
+
+
+    @Async
+    @Scheduled(initialDelayString="${security.tokenStore.cleaner.delay_ms:180000}",  fixedRateString = "${security.tokenStore.cleaner:180000}")
+    public void cleanExpiredTokens() {
+
+        List<InternalToken> tokensToDelete = new ArrayList<>();
+        for (Map.Entry<String,InternalToken> tokenEntry: tokens.entrySet()) {
+            if (tokenEntry.getValue().isExpired()) {
+                tokensToDelete.add(tokenEntry.getValue());
+            }
+            if (tokensToDelete.size() >= cleanerMaxBatchSize) {
+                break;
+            }
+        }
+
+        for ( InternalToken tokenToDelete : tokensToDelete) {
+            tokens.remove(tokenToDelete.token);
+            if (tokenToDelete.identity.getIdentifier()!=null && ! tokenToDelete.identity.getIdentifier().isEmpty()) {
+                identifier2Tokens.remove(tokenToDelete.identity.getIdentifier());
+            }
+        }
+    }
+
+    public int size() {
+        return tokens.size();
+    }
+
+    public void clear() {
+        tokens.clear();
+        identifier2Tokens.clear();
     }
 }

@@ -5,6 +5,19 @@ import java.util.Set;
 
 public class ApiTokenIdentity {
 
+
+    public ApiTokenIdentity() {
+    }
+
+    public ApiTokenIdentity(String identifier) {
+        this.identifier=identifier;
+    }
+
+    public ApiTokenIdentity(String identifier, Collection<Permission> permissions) {
+        this.identifier=identifier;
+        this.permissions = permissions;
+    }
+
     String identifier;
 
     Collection<Permission> permissions;

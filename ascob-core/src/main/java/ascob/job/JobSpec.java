@@ -1,4 +1,4 @@
-package ascob.api;
+package ascob.job;
 
 import java.util.List;
 
@@ -14,7 +14,9 @@ public class JobSpec {
 	JobParameters parameters;
 
 	List<LockSpec> locks;
-		
+
+	boolean manualStart;
+
 	public String getDescription() {
 		return description;
 	}
@@ -66,5 +68,14 @@ public class JobSpec {
 	
 	public static JobSpecBuilder builder(String submitter) {
 		return new JobSpecBuilder(submitter);
+	}
+
+
+	public boolean isManualStart() {
+		return manualStart;
+	}
+
+	public void setManualStart(boolean manualStart) {
+		this.manualStart = manualStart;
 	}
 }

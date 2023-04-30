@@ -1,4 +1,7 @@
-package ascob.api;
+package ascob.job;
+
+import ascob.StandardDateTime;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDateTime;
 
@@ -11,12 +14,16 @@ public class RunInfo {
 	String description;
 	
 	String submitter;
-	
+
+	@JsonFormat(shape=JsonFormat.Shape.STRING, pattern= StandardDateTime.PATTERN, timezone = StandardDateTime.TIMEZONE)
 	LocalDateTime definedTime;
-	
+
+	@JsonFormat(shape=JsonFormat.Shape.STRING, pattern= StandardDateTime.PATTERN, timezone = StandardDateTime.TIMEZONE)
 	LocalDateTime submissionTime;
-	
+
+	@JsonFormat(shape=JsonFormat.Shape.STRING, pattern= StandardDateTime.PATTERN, timezone = StandardDateTime.TIMEZONE)
 	LocalDateTime endTime;
+
 
 	
 	public RunStatus getStatus() {

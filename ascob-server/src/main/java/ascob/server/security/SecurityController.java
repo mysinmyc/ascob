@@ -1,5 +1,7 @@
 package ascob.server.security;
 
+import ascob.security.CreateTokenRequest;
+import ascob.security.CreateTokenResponse;
 import ascob.security.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;

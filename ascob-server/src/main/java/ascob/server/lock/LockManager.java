@@ -6,7 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import ascob.api.LockSpec;
+import ascob.job.LockSpec;
 import ascob.kv.KvStore;
 
 @Component

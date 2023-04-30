@@ -1,4 +1,4 @@
-package ascob.api;
+package ascob.job;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +8,7 @@ public class JobSpecBuilder {
 
 	public JobSpecBuilder(String submitter) {
 		job = new JobSpec();
+		job.submitter=submitter;
 	}
 	
 	public JobSpec build()  {
@@ -47,5 +48,15 @@ public class JobSpecBuilder {
 		}
 		locks.add(lock);
 		return this;
-	}	
+	}
+
+	public JobSpecBuilder withManualStart() {
+		job.setManualStart(true);
+		return this;
+	}
+
+	public JobSpecBuilder withAutomaticStart() {
+		job.setManualStart(false);
+		return this;
+	}
 }

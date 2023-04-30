@@ -1,20 +1,15 @@
 package ascob.server.job;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import ascob.job.JobSpec;
+import ascob.job.JobSpecBuilder;
+import ascob.job.RunInfo;
+import ascob.job.RunStatus;
+import ascob.server.backend.ExecutionBackendException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import ascob.api.JobSpec;
-import ascob.api.JobSpecBuilder;
-import ascob.api.RunInfo;
-import ascob.api.RunStatus;
-import ascob.server.backend.ExecutionBackendException;
+import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 public class JobServiceTest {
