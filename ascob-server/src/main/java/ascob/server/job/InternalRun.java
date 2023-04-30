@@ -21,9 +21,15 @@ public class InternalRun {
     @Convert(converter = JobSpecConverter.class)
     JobSpec jobSpec;
 
+    @Lob
+    @Lazy
+    @Convert(converter = JobSpecConverter.class)
+    JobSpec runtimeSpec;
+
+
     RunStatus status;
 
-    Boolean runnable;
+    boolean runnable;
 
     @Lob
     @Convert(converter = BackendRunIdConverter.class)
@@ -51,11 +57,11 @@ public class InternalRun {
         this.webhookId = webhookId;
     }
 
-    public Boolean getMonitored() {
+    public boolean isMonitored() {
         return monitored;
     }
 
-    public void setMonitored(Boolean monitored) {
+    public void setMonitored(boolean monitored) {
         this.monitored = monitored;
     }
 
@@ -137,6 +143,14 @@ public class InternalRun {
 
     public void setRunnable(boolean runnable) {
         this.runnable = runnable;
+    }
+
+    public JobSpec getRuntimeSpec() {
+        return runtimeSpec;
+    }
+
+    public void setRuntimeSpec(JobSpec runtimeSpec) {
+        this.runtimeSpec = runtimeSpec;
     }
 
     @Override

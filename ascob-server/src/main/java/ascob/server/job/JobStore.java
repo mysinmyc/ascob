@@ -3,6 +3,7 @@ package ascob.server.job;
 import ascob.job.JobSpec;
 import ascob.job.RunSearchFilters;
 import ascob.job.RunStatus;
+import ascob.server.util.SerializationUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.TypedQuery;
@@ -23,7 +24,7 @@ public class JobStore {
 	EntityManager entityManager;
 
 	@Transactional(TxType.REQUIRES_NEW)
-	public InternalRun newRun(JobSpec jobSpec) {
+	public InternalRun newRun(JobSpec jobSpec) throws InvalidJobSpecException {
 		InternalRun run = new InternalRun();
 		run.setStatus(RunStatus.DEFINED);
 		run.setJobSpec(jobSpec);
@@ -32,9 +33,25 @@ public class JobStore {
 		run.setSubmitter(jobSpec.getSubmitter());
 		run.setWebhookId(UUID.randomUUID().toString());
 		run.setRunnable(!jobSpec.isManualStart());
+		run.setRuntimeSpec(resolveVariables(run,jobSpec));
 		entityManager.persist(run);
+
 		return run;
 	}
+
+	private JobSpec resolveVariables(InternalRun run, JobSpec jobSpec) throws InvalidJobSpecException {
+		String jobSpecString = SerializationUtil.serialize(jobSpec);
+		if (jobSpecString.indexOf("%%")>-1) {
+			jobSpecString=jobSpecString.replaceAll("%%SUBMITTER%%", run.getSubmitter());
+			jobSpecString=jobSpecString.replaceAll("%%WEBHOOKID%%", run.getWebhookId());
+
+			if (jobSpecString.indexOf("%%")>-1) {
+				throw new InvalidJobSpecException(" Invalid variables %% in spec");
+			}
+		}
+		return SerializationUtil.deserialize(JobSpec.class, jobSpecString);
+	}
+
 
 	public InternalRun getRunById(Long runId) {
 		return entityManager.find(InternalRun.class,runId);

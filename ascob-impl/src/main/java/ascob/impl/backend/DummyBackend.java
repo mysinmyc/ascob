@@ -1,16 +1,17 @@
 package ascob.impl.backend;
 
+import ascob.backend.BackendOutputWriter;
+import ascob.backend.BackendRunStatus;
+import ascob.job.JobSpec;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
+
 import java.io.OutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
-import ascob.backend.BackendOutputWriter;
-import org.springframework.stereotype.Component;
-
-import ascob.job.JobSpec;
-import ascob.backend.BackendRunStatus;
-
+@ConditionalOnProperty(matchIfMissing = true, name = "backend.dummy.enabled", havingValue = "true")
 @Component
 public class DummyBackend extends ExecutionBackendBase implements BackendOutputWriter {
 	

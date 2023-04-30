@@ -16,9 +16,12 @@ public class JobServiceTest {
 
 	@Autowired
 	JobService jobService;
-	
+
+	@Autowired
+	JobStore jobStore;
+
 	@Test
-	public void testDummyJob() throws ExecutionBackendException {
+	public void testDummyJob() throws ExecutionBackendException, InvalidJobSpecException {
 		
 		JobSpec jobSpec = new JobSpecBuilder("test").withDescription("dummy").build();
 		
@@ -36,7 +39,7 @@ public class JobServiceTest {
 	}
 	
 	@Test
-	public void testSubmitException()  {
+	public void testSubmitException() throws InvalidJobSpecException {
 		
 		JobSpec jobSpec = new JobSpecBuilder("test").build();
 		
@@ -48,7 +51,7 @@ public class JobServiceTest {
 	
 	
 	@Test 
-	public void testRefreshJobs() {
+	public void testRefreshJobs() throws InvalidJobSpecException {
 
 		JobSpec jobOkSpec = new JobSpecBuilder("test").withDescription("dummy").build();
 		JobSpec jobKoSpec = new JobSpecBuilder("test").build();
@@ -66,5 +69,26 @@ public class JobServiceTest {
 		boolean resultRefresh2 =jobService.refreshActiveJobs();
 		assertFalse(resultRefresh2);
 
+	}
+
+
+	@Test
+	public void testVariablesResolution() throws InvalidJobSpecException {
+
+		JobSpec jobSpec = JobSpec.builder("paperino").withParameter("submittedBy", "%%SUBMITTER%%").withParameter("webhookId", "%%WEBHOOKID%%")
+				.withDescription("Dummy job submitted by %%SUBMITTER%%").build();
+
+		long runId = jobService.submit(jobSpec);
+
+		InternalRun run =jobStore.getRunById(runId);
+		JobSpec runtimeSpec=run.getRuntimeSpec();
+
+		assertEquals("paperino",runtimeSpec.getParameters().get("submittedBy"));
+		assertEquals(run.getWebhookId(),runtimeSpec.getParameters().get("webhookId"));
+		assertEquals("Dummy job submitted by paperino",runtimeSpec.getDescription());
+
+		JobSpec jobSpecKo = JobSpec.builder("ciao").withDescription("dummy %%ciao%%").build();
+
+		assertThrows(InvalidJobSpecException.class, ()->jobService.submit(jobSpecKo));
 	}
 }

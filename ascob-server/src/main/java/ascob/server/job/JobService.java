@@ -38,7 +38,7 @@ public class JobService {
 	@Autowired
 	LockManager lockManager;
 
-	public Long submit(JobSpec jobSpec) {
+	public Long submit(JobSpec jobSpec) throws InvalidJobSpecException {
 		InternalRun run = jobStore.newRun(jobSpec);
 		try {
 			refresh(run);
@@ -53,7 +53,7 @@ public class JobService {
 		if (run == null) {
 			throw new JobNotFoundException();
 		}
-		if (! (run.getJobSpec().isManualStart() && run.getStatus().equals(RunStatus.DEFINED) && ! run.isRunnable() ) ) {
+		if (! (run.getRuntimeSpec().isManualStart() && run.getStatus().equals(RunStatus.DEFINED) && ! run.isRunnable() ) ) {
 			return false;
 		}
 		run.setRunnable(true);
@@ -87,7 +87,7 @@ public class JobService {
 			return run;
 		}
 		if (run.isRunnable() && !initialStatus.isRunning()) {
-			JobSpec jobSpec = run.getJobSpec();
+			JobSpec jobSpec = run.getRuntimeSpec();
 			if (!lockManager.acquireLocks(run.getId().toString(), jobSpec.getLocks())) {
 				run.setStatus(RunStatus.WAITING_LOCKS);
 				log.debug("run locked {}",run);
@@ -105,12 +105,12 @@ public class JobService {
 				}
 			}
 		} else {
-			if (run.getMonitored()) {
+			if (run.isMonitored()) {
 				RunStatus newStatus = executionService.getStatus(run.getBackendRunId()).toRunStatus();
 				run.setStatus(newStatus);
 				if (newStatus.isFinalState()) {
 					run.setEndTime(LocalDateTime.now());
-					lockManager.releaseLocks(run.getId().toString(), run.getJobSpec().getLocks());
+					lockManager.releaseLocks(run.getId().toString(), run.getRuntimeSpec().getLocks());
 				}
 			}
 		}

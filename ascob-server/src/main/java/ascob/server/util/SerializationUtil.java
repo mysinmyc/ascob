@@ -21,4 +21,11 @@ public class SerializationUtil {
 		}
 		return GSON.fromJson(data, targetClass);
 	}
+
+	public static <T> T clone(T object) {
+		if (object==null) {
+			return null;
+		}
+		return deserialize((Class<T>)object.getClass(), serialize(object));
+	}
 }

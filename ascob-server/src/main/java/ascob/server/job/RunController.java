@@ -26,7 +26,7 @@ public class RunController {
 	JobService jobService;
 	
 	@RequestMapping(method=RequestMethod.POST)
-	public SubmitResponse submit(@RequestBody SubmitRequest request, Authentication authentication) throws ExecutionBackendException, NotAuthorizedException {
+	public SubmitResponse submit(@RequestBody SubmitRequest request, Authentication authentication) throws ExecutionBackendException, NotAuthorizedException, InvalidJobSpecException {
 		securityAssertionService.assertAuthorized(authentication, Permission.job_submit);
 		if (request.getJobSpec().isManualStart()) {
 			securityAssertionService.assertAuthorized(authentication, Permission.job_run_manual_start);
