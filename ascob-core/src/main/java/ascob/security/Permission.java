@@ -6,7 +6,7 @@ import java.util.Collection;
 public enum Permission {
     job_submit("job", true),
     job_run_manual_start("job",true),
-    job_run_manual_resubmit("job",true),
+    job_run_resubmit("job",true),
     job_run_upload_files("job",true),
     job_run_stop("job", true),
     job_run_read("job", false),
