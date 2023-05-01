@@ -60,6 +60,12 @@ public class RunController {
 		}
 	}
 
+	@RequestMapping(method=RequestMethod.DELETE, path = "/{runId}")
+	public void abort(@PathVariable("runId") Long runId, Authentication authentication) throws NotAuthorizedException, ExecutionBackendException {
+		securityAssertionService.assertAuthorized(authentication, Permission.job_run_abort);
+		jobService.stop(runId);
+	}
+
 	@RequestMapping(method=RequestMethod.POST,  path = "/{runId}/files/{fileId}")
 	public void upload(@PathVariable("runId") Long runId, @PathVariable("fileId") String fileId, HttpServletRequest request, Authentication authentication) throws NotAuthorizedException, IOException {
 		securityAssertionService.assertAuthorized(authentication, Permission.job_run_upload_files);

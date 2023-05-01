@@ -1,9 +1,7 @@
 package ascob.server.job;
 
-import ascob.job.JobSpec;
-import ascob.job.JobSpecBuilder;
-import ascob.job.RunInfo;
-import ascob.job.RunStatus;
+import ascob.backend.BackendRunStatus;
+import ascob.job.*;
 import ascob.server.backend.ExecutionBackendException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,7 +74,7 @@ public class JobServiceTest {
 	public void testVariablesResolution() throws InvalidJobSpecException {
 
 		JobSpec jobSpec = JobSpec.builder("paperino").withParameter("submittedBy", "%%SUBMITTER%%").withParameter("webhookId", "%%WEBHOOKID%%")
-				.withDescription("Dummy job submitted by %%SUBMITTER%%").build();
+				.withDescription("Dummy job submitted by %%SUBMITTER%% with runId %%RUNID%%").enableRuntimeVariables().build();
 
 		long runId = jobService.submit(jobSpec);
 
@@ -85,9 +83,9 @@ public class JobServiceTest {
 
 		assertEquals("paperino", runtimeSpec.getParameters().get("submittedBy"));
 		assertEquals(run.getWebhookId(), runtimeSpec.getParameters().get("webhookId"));
-		assertEquals("Dummy job submitted by paperino", runtimeSpec.getDescription());
+		assertEquals("Dummy job submitted by paperino with runId "+run.getId(), runtimeSpec.getDescription());
 
-		JobSpec jobSpecKo = JobSpec.builder("ciao").withDescription("dummy %%ciao%%").build();
+		JobSpec jobSpecKo = JobSpec.builder("ciao").enableRuntimeVariables().withDescription("dummy %%ciao%%").build();
 
 		assertThrows(InvalidJobSpecException.class, () -> jobService.submit(jobSpecKo));
 	}
@@ -106,6 +104,39 @@ public class JobServiceTest {
 
 		RunInfo runInfoAfterStart = jobService.getRunInfo(runId);
 		assertEquals(RunStatus.SUBMITTED, runInfoAfterStart.getStatus());
+
+	}
+
+	@Test
+	public void testLock() throws InvalidJobSpecException, ExecutionBackendException {
+
+		JobSpec jobSpecBlocker = JobSpec.builder("test").withDescription("test").withLocks("test1").withLabel("status", BackendRunStatus.RUNNING.name()).withDescription("test").build();
+		long runIdBlocker = jobService.submit(jobSpecBlocker);
+
+		jobService.refreshJobs();
+
+		RunInfo runInfoBlocker = jobService.getRunInfo(runIdBlocker);
+		assertEquals(RunStatus.RUNNING, runInfoBlocker.getStatus());
+
+		JobSpec jobSpecBlocked = JobSpec.builder("test").withDescription("test").withLocks("test1").withLabel("status", BackendRunStatus.RUNNING.name()).withDescription("test").build();
+		long runIdBlocked = jobService.submit(jobSpecBlocked);
+
+		jobService.refreshJobs();
+
+		RunInfo runInfoBlocked = jobService.getRunInfo(runIdBlocked);
+		assertEquals(RunStatus.WAITING_LOCKS, runInfoBlocked.getStatus());
+
+		jobService.stop(runIdBlocker);
+
+		jobService.refreshJobs();
+
+		runInfoBlocker = jobService.getRunInfo(runIdBlocker);
+		assertEquals(RunStatus.ABORTED, runInfoBlocker.getStatus());
+
+		jobService.refresh(runIdBlocked);
+		runInfoBlocked = jobService.getRunInfo(runIdBlocked);
+		assertEquals(RunStatus.RUNNING, runInfoBlocked.getStatus());
+
 
 	}
 }

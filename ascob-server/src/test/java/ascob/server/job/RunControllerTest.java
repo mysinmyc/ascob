@@ -1,5 +1,6 @@
 package ascob.server.job;
 
+import ascob.backend.BackendRunStatus;
 import ascob.job.*;
 import ascob.server.TestClients;
 import org.junit.jupiter.api.Test;
@@ -56,10 +57,13 @@ public class RunControllerTest {
 	public void testResubmit() {
 
 		SubmitRequest submitRequest = new SubmitRequest();
-		submitRequest.setJobSpec(JobSpec.builder("user1").withDescription("dummy job").build());
+		submitRequest.setJobSpec(JobSpec.builder("user1").withDescription("dummy job").withManualStart().build());
 
 		ResponseEntity<SubmitResponse> submitResponseEntity =testClients.withJobManagerToken().postForEntity("/api/runs",submitRequest, SubmitResponse.class);
 		assertTrue(submitResponseEntity.getStatusCode().is2xxSuccessful());
+
+		ResponseEntity<RunInfo> getSubmittedRunInfoResponse =testClients.withJobManagerToken().getForEntity("/api/runs/"+submitResponseEntity.getBody().getRunId(), RunInfo.class);
+		assertEquals(RunStatus.DEFINED, getSubmittedRunInfoResponse.getBody().getStatus());
 
 		ResponseEntity<SubmitResponse> resubmitResponse =testClients.withJobManagerToken().getForEntity("/api/runs/"+submitResponseEntity.getBody().getRunId()+"/resubmit?submitter=user2",SubmitResponse.class);
 		assertTrue( submitResponseEntity.getStatusCode().is2xxSuccessful());
@@ -69,6 +73,30 @@ public class RunControllerTest {
 		assertEquals("user2", getResubmittedRunInfoResponse.getBody().getSubmitter());
 		assertEquals("dummy job", getResubmittedRunInfoResponse.getBody().getDescription());
 		assertEquals(submitResponseEntity.getBody().getRunId(), getResubmittedRunInfoResponse.getBody().getParentId());
+		assertEquals(RunStatus.SUBMITTED, getResubmittedRunInfoResponse.getBody().getStatus());
 
+	}
+
+
+	@Test
+	public void testAbort() {
+
+		SubmitRequest submitRequest = new SubmitRequest();
+		submitRequest.setJobSpec(JobSpec.builder("test").withDescription("test").withLocks("test1").withLabel("status", BackendRunStatus.RUNNING.name()).withDescription("test").build());
+
+		ResponseEntity<SubmitResponse> submitResponseEntity =testClients.withJobManagerToken().postForEntity("/api/runs",submitRequest, SubmitResponse.class);
+		assertTrue(submitResponseEntity.getStatusCode().is2xxSuccessful());
+
+		ResponseEntity<RunInfo> getSubmittedRunInfoResponse =testClients.withJobManagerToken().getForEntity("/api/runs/"+submitResponseEntity.getBody().getRunId()+"/refresh", RunInfo.class);
+		assertEquals(RunStatus.RUNNING, getSubmittedRunInfoResponse.getBody().getStatus());
+
+
+		testClients.withJobManagerToken().delete("/api/runs/"+submitResponseEntity.getBody().getRunId());
+
+		getSubmittedRunInfoResponse =testClients.withJobManagerToken().getForEntity("/api/runs/"+submitResponseEntity.getBody().getRunId(), RunInfo.class);
+		assertEquals(RunStatus.ABORTING, getSubmittedRunInfoResponse.getBody().getStatus());
+
+		getSubmittedRunInfoResponse =testClients.withJobManagerToken().getForEntity("/api/runs/"+submitResponseEntity.getBody().getRunId()+"/refresh", RunInfo.class);
+		assertEquals(RunStatus.ABORTED, getSubmittedRunInfoResponse.getBody().getStatus());
 	}
 }

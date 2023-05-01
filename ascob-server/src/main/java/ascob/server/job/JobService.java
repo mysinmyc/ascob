@@ -1,6 +1,7 @@
 package ascob.server.job;
 
 import ascob.backend.BackendRunId;
+import ascob.backend.BackendRunStatus;
 import ascob.file.FileStore;
 import ascob.job.JobSpec;
 import ascob.job.RunInfo;
@@ -81,6 +82,22 @@ public class JobService {
 		return true;
 	}
 
+	public void stop(Long runId) throws ExecutionBackendException {
+		InternalRun run = jobStore.getRunById(runId);
+		if (run == null) {
+			throw new JobNotFoundException();
+		}
+		if (!run.getStatus().isRunning()) {
+			run.setStatus(RunStatus.ABORTED);
+			lockManager.releaseLocks(run.getId().toString(), run.getRuntimeSpec().getLocks());
+			jobStore.updateRun(run);
+		} else {
+			run.setStatus(RunStatus.ABORTING);
+			executionService.stopRun(run.getBackendRunId());
+			jobStore.updateRun(run);
+		}
+	}
+
 	public RunInfo getRunInfo(Long runId) {
 		InternalRun run = jobStore.getRunById(runId);
 		if (run == null) {
@@ -122,7 +139,11 @@ public class JobService {
 			}
 		} else {
 			if (run.isMonitored()) {
-				RunStatus newStatus = executionService.getStatus(run.getBackendRunId()).toRunStatus();
+				BackendRunStatus backendRunStatus = executionService.getStatus(run.getBackendRunId());
+				if (backendRunStatus ==null) {
+					throw new ExecutionBackendException("Something wrong in backend");
+				}
+				RunStatus newStatus = backendRunStatus.toRunStatus();
 				run.setStatus(newStatus);
 				if (newStatus.isFinalState()) {
 					run.setEndTime(LocalDateTime.now());
@@ -136,14 +157,32 @@ public class JobService {
 		return run;
 	}
 
-	public boolean refreshActiveJobs() {
+	public void refreshJobs() {
+		refreshActiveJobs();
+		refreshPendingJobs();
+	}
+
+	protected boolean refreshActiveJobs() {
 		log.debug("Refresh active jobs...");
 		List<InternalRun> activeRuns = jobStore.getActiveMonitoredJobs();
 		for (InternalRun run : activeRuns) {
 			try {
 				refresh(run);
 			} catch (ExecutionBackendException e) {
-				log.warn("an error occurred during refresh",e);
+				log.warn("an error occurred during refresh of active job "+run,e);
+			}
+		}
+		return ! activeRuns.isEmpty();
+	}
+
+	protected boolean refreshPendingJobs() {
+		log.debug("Refresh pending jobs...");
+		List<InternalRun> activeRuns = jobStore.getPendingJobs();
+		for (InternalRun run : activeRuns) {
+			try {
+				refresh(run);
+			} catch (ExecutionBackendException e) {
+				log.warn("an error occurred during refresh of pending job "+run,e);
 			}
 		}
 		return ! activeRuns.isEmpty();

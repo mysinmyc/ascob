@@ -17,6 +17,8 @@ public class JobSpec {
 
 	boolean manualStart;
 
+	boolean runtimeVariables;
+
 	public String getDescription() {
 		return description;
 	}
@@ -77,5 +79,13 @@ public class JobSpec {
 
 	public void setManualStart(boolean manualStart) {
 		this.manualStart = manualStart;
+	}
+
+	public boolean isRuntimeVariables() {
+		return runtimeVariables;
+	}
+
+	public void setRuntimeVariables(boolean runtimeVariables) {
+		this.runtimeVariables = runtimeVariables;
 	}
 }

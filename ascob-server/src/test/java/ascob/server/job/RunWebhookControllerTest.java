@@ -33,8 +33,7 @@ public class RunWebhookControllerTest {
     public void testUpdateRun() {
 
         SubmitRequest submitRequest = new SubmitRequest();
-        submitRequest.setJobSpec(JobSpec.builder("test").withDescription("test")
-                .withLabel("status", "SUBMITTED").build());
+        submitRequest.setJobSpec(JobSpec.builder("test").withDescription("test").build());
         ResponseEntity<SubmitResponse> submitResponseEntity = testClients.withRootToken().postForEntity("/api/runs", submitRequest, SubmitResponse.class);
 
         Long runId =submitResponseEntity.getBody().getRunId();

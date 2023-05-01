@@ -21,6 +21,8 @@ import java.util.UUID;
 public class JobStore {
 
     static final List<RunStatus> ACTIVE_STATUSES = List.of(RunStatus.values()).stream().filter(s -> !s.isFinalState()).toList();
+
+    static final List<RunStatus> PENDING_STATUSES = List.of(RunStatus.values()).stream().filter(s -> ! (s.isFinalState() || s.isRunning())).toList();
     @PersistenceContext
     EntityManager entityManager;
 
@@ -33,8 +35,6 @@ public class JobStore {
         run.setSubmitter(jobSpec.getSubmitter());
         run.setWebhookId(UUID.randomUUID().toString());
         run.setRunnable(!jobSpec.isManualStart());
-        run.setRuntimeSpec(resolveVariables(run, jobSpec));
-        entityManager.persist(run);
         return run;
     }
 
@@ -42,6 +42,10 @@ public class JobStore {
     public InternalRun newRun(JobSpec jobSpec) throws InvalidJobSpecException {
         InternalRun run = buildRun(jobSpec);
         entityManager.persist(run);
+        if (jobSpec.isRuntimeVariables()) {
+            run.setRuntimeSpec(resolveVariables(run, jobSpec));
+            entityManager.merge(run);
+        }
         return run;
     }
 
@@ -49,9 +53,14 @@ public class JobStore {
     public InternalRun duplicateRun(InternalRun sourceRun, String submmitter) throws InvalidJobSpecException {
         JobSpec jobSpec = SerializationUtil.clone(sourceRun.getJobSpec());
         jobSpec.setSubmitter(submmitter);
+        jobSpec.setManualStart(false);
         InternalRun run = buildRun(jobSpec);
         run.setParentId(sourceRun.getParentId() == null ? sourceRun.getId() : sourceRun.getParentId());
         entityManager.persist(run);
+        if (jobSpec.isRuntimeVariables()) {
+            run.setRuntimeSpec(resolveVariables(run, jobSpec));
+            entityManager.merge(run);
+        }
         return run;
     }
 
@@ -60,8 +69,9 @@ public class JobStore {
         if (jobSpecString.indexOf("%%") > -1) {
             jobSpecString = jobSpecString.replaceAll("%%SUBMITTER%%", run.getSubmitter());
             jobSpecString = jobSpecString.replaceAll("%%WEBHOOKID%%", run.getWebhookId());
+            jobSpecString = jobSpecString.replaceAll("%%RUNID%%", ""+run.getId());
             if (jobSpecString.indexOf("%%") > -1) {
-                throw new InvalidJobSpecException(" Invalid variables %% in spec");
+                throw new InvalidJobSpecException("Invalid variables %% in spec");
             }
         }
         return SerializationUtil.deserialize(JobSpec.class, jobSpecString);
@@ -83,6 +93,12 @@ public class JobStore {
         TypedQuery<InternalRun> runsQuery = entityManager.createQuery("from InternalRun where monitored=:monitored and status in (:statuses)", InternalRun.class);
         runsQuery.setParameter("monitored", Boolean.TRUE);
         runsQuery.setParameter("statuses", ACTIVE_STATUSES);
+        return runsQuery.getResultList();
+    }
+
+    public List<InternalRun> getPendingJobs() {
+        TypedQuery<InternalRun> runsQuery = entityManager.createQuery("from InternalRun where status in (:statuses)", InternalRun.class);
+        runsQuery.setParameter("statuses", PENDING_STATUSES);
         return runsQuery.getResultList();
     }
 
@@ -151,5 +167,6 @@ public class JobStore {
             entityManager.createQuery(criteriaDelete).executeUpdate();
         }
     }
+
 
 }

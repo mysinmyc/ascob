@@ -1,5 +1,6 @@
 package ascob.server.job;
 
+import ascob.backend.BackendRunStatus;
 import ascob.job.*;
 import ascob.server.TestClients;
 import org.junit.jupiter.api.Test;
@@ -94,19 +95,19 @@ public class RunSearchControllerTest {
         jobStore.clear();
 
         SubmitRequest submitRequestOk = new SubmitRequest();
-        submitRequestOk.setJobSpec(JobSpec.builder("submitter1").withDescription("test").withLabel("status", RunStatus.SUCCEDED.name()).build());
+        submitRequestOk.setJobSpec(JobSpec.builder("submitter1").withDescription("test").withLabel("status", BackendRunStatus.SUCCEDED.name()).build());
         for (int cnt = 0; cnt < 7; cnt++) {
             testClients.withJobManagerToken().postForObject("/api/runs", submitRequestOk, Object.class);
         }
 
         SubmitRequest submitRequestAborted = new SubmitRequest();
-        submitRequestAborted.setJobSpec(JobSpec.builder("submitter1").withDescription("test").withLabel("status", RunStatus.ABORTED.name()).build());
+        submitRequestAborted.setJobSpec(JobSpec.builder("submitter1").withDescription("test").withLabel("status", BackendRunStatus.ABORTED.name()).build());
         for (int cnt = 0; cnt < 8; cnt++) {
             testClients.withJobManagerToken().postForObject("/api/runs", submitRequestAborted, Object.class);
         }
 
         SubmitRequest submitRequestFailed = new SubmitRequest();
-        submitRequestFailed.setJobSpec(JobSpec.builder("submitter1").withDescription("test").withLabel("status", RunStatus.FAILED.name()).build());
+        submitRequestFailed.setJobSpec(JobSpec.builder("submitter1").withDescription("test").withLabel("status", BackendRunStatus.FAILED.name()).build());
         for (int cnt = 0; cnt < 9; cnt++) {
             testClients.withJobManagerToken().postForObject("/api/runs", submitRequestFailed, Object.class);
         }

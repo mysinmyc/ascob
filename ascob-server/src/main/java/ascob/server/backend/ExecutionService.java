@@ -63,6 +63,18 @@ public class ExecutionService {
 		}
 	}
 
+	public void stopRun(BackendRunId backendRunId) throws ExecutionBackendException {
+		ExecutionBackend backend = getBackendForRun(backendRunId);
+		try {
+			if (! (backend instanceof BackendJobStoppable)) {
+				throw new Exception("Backend doesn't allows to stop job");
+			}
+			((BackendJobStoppable)backend).stopRun(backendRunId.getIdentificationKeys());
+		} catch (Exception e) {
+			throw new ExecutionBackendException(e);
+		}
+	}
+
 	public void writeOutputInto(BackendRunId backendRunId, OutputStream outputStream) throws ExecutionBackendException {
 		ExecutionBackend backend = getBackendForRun(backendRunId);
 		try {

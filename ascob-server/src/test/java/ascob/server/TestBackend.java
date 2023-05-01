@@ -1,6 +1,7 @@
 package ascob.server;
 
 import ascob.backend.BackendIdentificationKeysUpdater;
+import ascob.backend.BackendJobStoppable;
 import ascob.backend.BackendRunStatus;
 import ascob.backend.ExecutionBackend;
 import ascob.job.JobSpec;
@@ -11,7 +12,7 @@ import java.util.Map;
 import java.util.UUID;
 
 @Component
-public class TestBackend  implements ExecutionBackend, BackendIdentificationKeysUpdater {
+public class TestBackend  implements ExecutionBackend, BackendIdentificationKeysUpdater, BackendJobStoppable {
 
 	@Override
 	public String getId() {
@@ -23,28 +24,31 @@ public class TestBackend  implements ExecutionBackend, BackendIdentificationKeys
 		return jobSpec.getDescription() !=null&& jobSpec.getDescription().toLowerCase().contains("test");
 	}
 
+	Map<String,BackendRunStatus> jobsStatus = new HashMap<String, BackendRunStatus>();
 	@Override
 	public Map<String, String> submit(JobSpec jobSpec) throws Exception {
 		if ("true".equals(jobSpec.getLabelValueOr("fail", "false"))) {
 			throw new Exception("KO");
 		}
 		HashMap<String,String> ids = new HashMap<>();
-		ids.put("id", UUID.randomUUID().toString());
-		ids.put("status", jobSpec.getLabelValueOr("status",  BackendRunStatus.SUCCEDED.toString()));
+		String jobId=UUID.randomUUID().toString();
+		ids.put("id", jobId);
+		jobsStatus.put(jobId,  BackendRunStatus.valueOf(jobSpec.getLabelValueOr("status",  BackendRunStatus.SUCCEDED.toString())));
 		return ids;
 	}
 
 	@Override
 	public BackendRunStatus getStatus(Map<String, String> identificationKeys) throws Exception {
-		String status = identificationKeys.get("status");
-		if (status==null || status.isEmpty()) {
-			throw new Exception("KO");
-		}
-		return BackendRunStatus.valueOf(status);
+		return jobsStatus.get(identificationKeys.get("id"));
 	}
 
 	@Override
 	public Map<String, String> updateIdentificationKeys(Map<String, String> newIdentificationKeys, Map<String, String> oldIdentificationKeys) throws Exception {
 		return newIdentificationKeys;
+	}
+
+	@Override
+	public void stopRun(Map<String, String> identificationKeys) throws Exception {
+		jobsStatus.put(identificationKeys.get("id"), BackendRunStatus.ABORTED);
 	}
 }

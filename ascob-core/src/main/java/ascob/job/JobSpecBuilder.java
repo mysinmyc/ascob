@@ -38,15 +38,20 @@ public class JobSpecBuilder {
 		}
 		labels.put(name, value);
 		return this;
-	}	
-	
-	public JobSpecBuilder withLock(LockSpec lock) {
+	}
+
+	public JobSpecBuilder withLocks(String... locks) {
+		LockSpec.of(locks).forEach(this::withLock);
+		return this;
+	}
+
+	public JobSpecBuilder withLock(LockSpec lockSpec) {
 		List<LockSpec> locks = job.getLocks();
 		if (locks ==null ) {
 			locks=new ArrayList<LockSpec>();
 			job.setLocks(locks);
 		}
-		locks.add(lock);
+		locks.add(lockSpec);
 		return this;
 	}
 
@@ -57,6 +62,16 @@ public class JobSpecBuilder {
 
 	public JobSpecBuilder withAutomaticStart() {
 		job.setManualStart(false);
+		return this;
+	}
+
+	public JobSpecBuilder enableRuntimeVariables() {
+		job.setRuntimeVariables(true);
+		return this;
+	}
+
+	public JobSpecBuilder disableRuntimeVariables() {
+		job.setRuntimeVariables(true);
 		return this;
 	}
 }

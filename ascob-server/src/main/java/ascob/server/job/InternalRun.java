@@ -148,7 +148,7 @@ public class InternalRun {
     }
 
     public JobSpec getRuntimeSpec() {
-        return runtimeSpec;
+        return runtimeSpec == null ? jobSpec : runtimeSpec;
     }
 
     public void setRuntimeSpec(JobSpec runtimeSpec) {

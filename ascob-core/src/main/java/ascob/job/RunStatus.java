@@ -9,6 +9,7 @@ public enum RunStatus {
 	RUNNING(true,false),
 	SUCCEDED(false,true),
 	FAILED(false,true),
+	ABORTING(true,false),
 	ABORTED(false,true);
 	
 	boolean running;
