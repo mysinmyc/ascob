@@ -125,16 +125,18 @@ public class JobService {
 				run.setStatus(RunStatus.WAITING_LOCKS);
 				log.debug("run locked {}",run);
 			} else {
-				run.setSubmissionTime(LocalDateTime.now());
-				try {
-					BackendRunId backendRunId = executionService.submit(jobSpec);
-					run.setBackendRunId(backendRunId);
-					run.setMonitored(executionService.isMonitorable(backendRunId));
-					run.setStatus(RunStatus.SUBMITTED);
-					log.info("job submitted {} ",run);
-				} catch (ExecutionBackendException e) {
-					log.warn("an error occurred during submission of run "+run,e);
-					run.setStatus(RunStatus.IN_DOUBT);
+				if (jobStore.changeStatus(run, initialStatus, RunStatus.PENDING_SUBMIT)) {
+					run.setSubmissionTime(LocalDateTime.now());
+					try {
+						BackendRunId backendRunId = executionService.submit(jobSpec);
+						run.setBackendRunId(backendRunId);
+						run.setMonitored(executionService.isMonitorable(backendRunId));
+						run.setStatus(RunStatus.SUBMITTED);
+						log.info("job submitted {} ", run);
+					} catch (ExecutionBackendException e) {
+						log.warn("an error occurred during submission of run " + run, e);
+						run.setStatus(RunStatus.IN_DOUBT);
+					}
 				}
 			}
 		} else {

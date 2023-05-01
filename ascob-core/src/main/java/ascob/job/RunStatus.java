@@ -4,6 +4,7 @@ public enum RunStatus {
 
 	DEFINED(false,false),
 	WAITING_LOCKS(false,false),
+	PENDING_SUBMIT(true,false),
 	SUBMITTED(true,false),
 	IN_DOUBT(false,true),
 	RUNNING(true,false),

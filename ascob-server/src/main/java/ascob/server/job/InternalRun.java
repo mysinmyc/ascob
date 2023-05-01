@@ -29,6 +29,7 @@ public class InternalRun {
     JobSpec runtimeSpec;
 
 
+    @Enumerated(EnumType.STRING)
     RunStatus status;
 
     boolean runnable;

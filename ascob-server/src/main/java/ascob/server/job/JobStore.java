@@ -6,6 +6,7 @@ import ascob.job.RunStatus;
 import ascob.server.util.SerializationUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.*;
 import jakarta.transaction.Transactional;
@@ -79,6 +80,18 @@ public class JobStore {
 
     public InternalRun getRunById(Long runId) {
         return entityManager.find(InternalRun.class, runId);
+    }
+
+    @Transactional(TxType.REQUIRES_NEW)
+    public boolean changeStatus(InternalRun run, RunStatus fromStatus, RunStatus toStatus) {
+        if (toStatus.equals(fromStatus)) {
+            return false;
+        }
+        Query query= entityManager.createQuery("update InternalRun set status=:toStatus where id=:id and status=:fromStatus");
+        query.setParameter("id", run.getId());
+        query.setParameter("fromStatus", fromStatus);
+        query.setParameter("toStatus", toStatus);
+        return query.executeUpdate() == 1;
     }
 
     @Transactional(TxType.REQUIRES_NEW)
