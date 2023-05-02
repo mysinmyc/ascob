@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.LocalDateTime;
+import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
 
@@ -122,10 +123,12 @@ public class JobService {
 		if (run.isRunnable() && !initialStatus.isRunning()) {
 			JobSpec jobSpec = run.getRuntimeSpec();
 			if (!lockManager.acquireLocks(run.getId().toString(), jobSpec.getLocks())) {
-				run.setStatus(RunStatus.WAITING_LOCKS);
+				if (! (RunStatus.WAITING_LOCKS.equals(initialStatus) || jobStore.changeStatus(run, initialStatus, RunStatus.WAITING_LOCKS)) ){
+					throw new ConcurrentModificationException("Status changed externally before set to locked run "+run);
+				}
 				log.debug("run locked {}",run);
 			} else {
-				if (jobStore.changeStatus(run, initialStatus, RunStatus.PENDING_SUBMIT)) {
+				if (jobSpec.hasLocks() || jobStore.changeStatus(run, initialStatus, RunStatus.PENDING_SUBMIT)) {
 					run.setSubmissionTime(LocalDateTime.now());
 					try {
 						BackendRunId backendRunId = executionService.submit(jobSpec);
@@ -137,6 +140,8 @@ public class JobService {
 						log.warn("an error occurred during submission of run " + run, e);
 						run.setStatus(RunStatus.IN_DOUBT);
 					}
+				} else {
+					throw new ConcurrentModificationException("Status changed externally before submission of run "+run);
 				}
 			}
 		} else {

@@ -10,7 +10,7 @@ public class JobSpec {
 	String submitter;
 
 	JobLabels labels;
-	
+
 	JobParameters parameters;
 
 	List<LockSpec> locks;
@@ -26,7 +26,7 @@ public class JobSpec {
 	public void setDescription(String description) {
 		this.description = description;
 	}
-	
+
 	public List<LockSpec> getLocks() {
 		return locks;
 	}
@@ -42,7 +42,7 @@ public class JobSpec {
 		String value=labels.get(label);
 		return value==null || value.isEmpty() ? defaultValue : value;
 	}
-	
+
 	public JobLabels getLabels() {
 		return labels;
 	}
@@ -58,7 +58,7 @@ public class JobSpec {
 	public void setParameters(JobParameters parameters) {
 		this.parameters = parameters;
 	}
-		
+
 	public String getSubmitter() {
 		return submitter;
 	}
@@ -66,8 +66,8 @@ public class JobSpec {
 	public void setSubmitter(String submitter) {
 		this.submitter = submitter;
 	}
-	
-	
+
+
 	public static JobSpecBuilder builder(String submitter) {
 		return new JobSpecBuilder(submitter);
 	}
@@ -87,5 +87,9 @@ public class JobSpec {
 
 	public void setRuntimeVariables(boolean runtimeVariables) {
 		this.runtimeVariables = runtimeVariables;
+	}
+
+	public boolean hasLocks() {
+		return locks!=null && !locks.isEmpty();
 	}
 }
