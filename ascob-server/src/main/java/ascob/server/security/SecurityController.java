@@ -1,12 +1,16 @@
 package ascob.server.security;
 
-import ascob.security.CreateTokenRequest;
-import ascob.security.CreateTokenResponse;
 import ascob.security.*;
+import ascob.server.ApiInfo;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+@SecurityRequirements({@SecurityRequirement(name = ApiInfo.API_TOKEN_SCHEMA_NAME)})
 @RestController
 @RequestMapping("/api/security")
 public class SecurityController {
@@ -17,13 +21,16 @@ public class SecurityController {
     @Autowired
     ApiTokenValidator apiTokenValidator;
 
-    @RequestMapping(value = "/whoami")
+    @Operation(description = "return authentication name")
+    @RequestMapping(value = "/whoami", method = RequestMethod.GET)
     public String whoami( Authentication authentication) {
         return authentication.getName();
     }
 
+    @Operation(description = "Generate a new api token")
     @RequestMapping(value = "/tokens/{identifier}",method = RequestMethod.POST)
-    public CreateTokenResponse createToken(@PathVariable("identifier") String identifier, @RequestBody CreateTokenRequest request, Authentication authentication) throws NotAuthorizedException {
+    public CreateTokenResponse createToken(@Parameter(description = "token identifier") @PathVariable("identifier") String identifier,
+                                           @RequestBody CreateTokenRequest request, Authentication authentication) throws NotAuthorizedException {
         securityAssertionService.assertAuthorized(authentication,Permission.security_token_write);
         if (! (apiTokenValidator instanceof ApiTokenStore)) {
             throw new RuntimeException("read only store");
@@ -38,8 +45,9 @@ public class SecurityController {
         }
     }
 
+    @Operation(description = "Delete tokens")
     @RequestMapping(value = "/tokens/{identifier}",method = RequestMethod.DELETE)
-    public void deleteTokenByIdentifier(@PathVariable("identifier") String identifier, Authentication authentication) throws NotAuthorizedException {
+    public void deleteTokenByIdentifier(@Parameter(description = "Token identifier") @PathVariable("identifier") String identifier, Authentication authentication) throws NotAuthorizedException {
         securityAssertionService.assertAuthorized(authentication, Permission.security_token_write);
         if (!  (apiTokenValidator instanceof ApiTokenStore)) {
             throw new RuntimeException("read only store");

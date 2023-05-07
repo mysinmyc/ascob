@@ -1,33 +1,41 @@
 package ascob.server.lock;
 
-import java.util.Collection;
-import java.util.List;
-
+import ascob.job.LockSpec;
+import ascob.kv.KvStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import ascob.job.LockSpec;
-import ascob.kv.KvStore;
+import java.util.Collection;
+import java.util.List;
 
+/**
+ * Manages locks in a KV store
+ */
 @Component
 public class LockManager {
-	
+
 	@Autowired
 	KvStore kvStore;
-	
-	String getKeyOwnerSuffix(String ownerId) {
-		return "/"+ownerId;
+
+	static String getKeyOwnerSuffix(String ownerId) {
+		return "/owner/"+ownerId;
 	}
-	
-	String lockToKey(String ownerId,LockSpec lockSpec) {
+
+	static String lockToKey(String ownerId,LockSpec lockSpec) {
 		return "/ascob/locks/"+lockSpec.getKey()+getKeyOwnerSuffix(ownerId);
 	}
-	
+
+	/**
+	 * Try to acquire locks by setting keys in the KV store and checking that there are no other keys owner by others. If it fails remove keys
+	 * @param ownerId = lock owner
+	 * @param lockSpecs = locks
+	 * @return true if the locks are acquired
+	 */
 	public boolean acquireLocks(String ownerId, List<LockSpec> lockSpecs) {
 		if (lockSpecs==null || lockSpecs.isEmpty()) {
 			return true;
 		}
-		for (LockSpec lock : lockSpecs) {
+			for (LockSpec lock : lockSpecs) {
 			kvStore.setKeyValue(lockToKey(ownerId,lock),"");
 		}
 		boolean acquired = true;
@@ -45,13 +53,18 @@ public class LockManager {
 		if (!acquired) {
 			releaseLocks(ownerId, lockSpecs);
 		}
-		return acquired;		
+		return acquired;
 	}
-	
+
+	/**
+	 * Release locks by removing keys inside the KV store
+	 * @param ownerId = Lock owner
+	 * @param lockSpecs = locks
+	 */
 	public void releaseLocks(String ownerId, List<LockSpec> lockSpecs) {
 		if (lockSpecs==null || lockSpecs.isEmpty()) {
 			return;
-		}		
+		}
 		for (LockSpec lock : lockSpecs) {
 			kvStore.removeKey(lockToKey(ownerId,lock));
 		}

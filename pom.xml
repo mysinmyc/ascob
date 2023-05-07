@@ -71,5 +71,6 @@
 		<module>ascob-server</module>
 		<module>ascob-impl</module>
 		<module>ascob-core</module>
+		<module>ascob-api</module>
 	</modules>
 </project>

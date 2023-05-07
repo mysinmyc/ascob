@@ -1,14 +1,12 @@
 package ascob.impl.backend.jenkins;
 
-import ascob.job.JobSpec;
-import ascob.backend.BackendIdentificationKeysUpdater;
-import ascob.backend.BackendJobStoppable;
-import ascob.backend.BackendOutputWriter;
-import ascob.backend.BackendRunStatus;
+import ascob.backend.*;
 import ascob.impl.backend.ExecutionBackendBase;
+import ascob.impl.tools.jenkins.AbortMode;
 import ascob.impl.tools.jenkins.BuildResult;
 import ascob.impl.tools.jenkins.JenkinsClient;
 import ascob.impl.tools.jenkins.JenkinsClientManager;
+import ascob.job.JobSpec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -78,7 +76,7 @@ public class JenkinsBackend extends ExecutionBackendBase implements BackendOutpu
 		}
 		switch (result) {
 			case SUCCESS:
-			return BackendRunStatus.SUCCEDED;
+			return BackendRunStatus.SUCCEEDED;
 			case ABORTED:
 			return BackendRunStatus.ABORTED;
 		default:
@@ -122,9 +120,18 @@ public class JenkinsBackend extends ExecutionBackendBase implements BackendOutpu
 	}
 
 	@Override
-	public void stopRun(Map<String, String> identificationKeys) throws Exception {
+	public void stopRun(Map<String, String> identificationKeys, StopMode stopMode) throws Exception {
 		String JenkinsInstance = identificationKeys.get(JenkinsIdentificationParameters.INSTANCE);
 		JenkinsClient client = JenkinsClientManager.getClientByName(JenkinsInstance);
-		client.abortBuild(identificationKeys.get(JenkinsIdentificationParameters.PROJECT_NAME), getBuildId(identificationKeys));
+		client.abortBuild(identificationKeys.get(JenkinsIdentificationParameters.PROJECT_NAME), getBuildId(identificationKeys), getMode(stopMode));
+	}
+
+	private AbortMode getMode(StopMode stopMode) {
+		switch (stopMode) {
+			case CLEAN:
+				return AbortMode.stop;
+			default:
+				return AbortMode.kill;
+		}
 	}
 }

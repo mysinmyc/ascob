@@ -1,21 +1,21 @@
 package ascob.impl.backend.rundeck;
 
-import java.io.OutputStream;
-import java.util.Map;
-
 import ascob.backend.BackendJobStoppable;
 import ascob.backend.BackendOutputWriter;
+import ascob.backend.BackendRunStatus;
+import ascob.backend.StopMode;
+import ascob.impl.backend.ExecutionBackendBase;
+import ascob.impl.tools.rundeck.ExecutionStatus;
+import ascob.impl.tools.rundeck.RundeckClient;
+import ascob.impl.tools.rundeck.RundeckClientManager;
+import ascob.job.JobSpec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
-import ascob.job.JobSpec;
-import ascob.backend.BackendRunStatus;
-import ascob.impl.backend.ExecutionBackendBase;
-import ascob.impl.tools.rundeck.RundeckClient;
-import ascob.impl.tools.rundeck.RundeckClientManager;
-import ascob.impl.tools.rundeck.ExecutionStatus;
+import java.io.OutputStream;
+import java.util.Map;
 
 @ConditionalOnProperty(matchIfMissing = false, name= "rundeck.enabled", havingValue = "true")
 @Component
@@ -55,7 +55,7 @@ public class RundeckBackend extends ExecutionBackendBase implements BackendOutpu
 		case running:
 			return BackendRunStatus.RUNNING;
 		case succeeded:
-			return BackendRunStatus.SUCCEDED;
+			return BackendRunStatus.SUCCEEDED;
 		default:
 			return BackendRunStatus.FAILED;
 		}
@@ -67,7 +67,7 @@ public class RundeckBackend extends ExecutionBackendBase implements BackendOutpu
 		client.writeExecutionOutputInto(identificationKeys.get(RundeckIdentificationParameters.EXECUTION_ID),outputStream,outputMaxLines);
 	}
 
-	public void stopRun(Map<String,String> identificationKeys) throws Exception {
+	public void stopRun(Map<String,String> identificationKeys, StopMode stopMode) throws Exception {
 		String rundeckInstance = identificationKeys.get(RundeckIdentificationParameters.INSTANCE);
 		RundeckClient client = rundeckClientManager.getClientByName(rundeckInstance);
 		client.abortExecution(identificationKeys.get(RundeckIdentificationParameters.EXECUTION_ID));

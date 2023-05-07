@@ -1,5 +1,6 @@
 package ascob.impl.backend.jenkins;
 
+import ascob.backend.StopMode;
 import ascob.job.JobSpec;
 import ascob.job.JobSpecBuilder;
 import ascob.backend.BackendRunStatus;
@@ -51,7 +52,7 @@ public class JenkinsBackendTest {
             Thread.sleep(500);
         }
         BackendRunStatus status = jenkinsBackend.getStatus(identifier);
-        assertEquals(BackendRunStatus.SUCCEDED, status );
+        assertEquals(BackendRunStatus.SUCCEEDED, status );
 
         OutputStream outputStream = new ByteArrayOutputStream();
         jenkinsBackend.writeOutputInto(identifier, outputStream);
@@ -70,7 +71,7 @@ public class JenkinsBackendTest {
         Thread.sleep(500);
         assertEquals(BackendRunStatus.RUNNING,jenkinsBackend.getStatus(identifier));
 
-        jenkinsBackend.stopRun(identifier);
+        jenkinsBackend.stopRun(identifier, StopMode.CLEAN);
         Thread.sleep(500);
         for (int i = 0; i < 100 && BackendRunStatus.RUNNING.equals(jenkinsBackend.getStatus(identifier)); i++) {
             Thread.sleep(500);

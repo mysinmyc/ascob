@@ -1,18 +1,18 @@
 package ascob.server.backend;
 
 import ascob.backend.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-
 import ascob.job.JobSpec;
 import ascob.job.Labels;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
 import java.io.OutputStream;
 import java.util.Map;
 
 @Component
 public class ExecutionService {
-	
+	private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ExecutionService.class);
+
 	@Autowired
 	ExecutionBackendRegistry backendRegistry;
 		
@@ -51,7 +51,7 @@ public class ExecutionService {
 				return currentBackend;
 			}
 		}
-		throw new ExecutionBackendException("no backend avail");
+		throw new ExecutionBackendException("no backend available");
 	}
 
 	public BackendRunStatus getStatus(BackendRunId backendRunId) throws ExecutionBackendException {
@@ -63,13 +63,13 @@ public class ExecutionService {
 		}
 	}
 
-	public void stopRun(BackendRunId backendRunId) throws ExecutionBackendException {
+	public void stopRun(BackendRunId backendRunId, boolean force) throws ExecutionBackendException {
 		ExecutionBackend backend = getBackendForRun(backendRunId);
 		try {
 			if (! (backend instanceof BackendJobStoppable)) {
 				throw new Exception("Backend doesn't allows to stop job");
 			}
-			((BackendJobStoppable)backend).stopRun(backendRunId.getIdentificationKeys());
+			((BackendJobStoppable)backend).stopRun(backendRunId.getIdentificationKeys(), force ? StopMode.FORCE : StopMode.CLEAN);
 		} catch (Exception e) {
 			throw new ExecutionBackendException(e);
 		}

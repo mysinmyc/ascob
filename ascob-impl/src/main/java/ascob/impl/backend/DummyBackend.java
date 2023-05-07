@@ -31,7 +31,7 @@ public class DummyBackend extends ExecutionBackendBase implements BackendOutputW
 
 	@Override
 	public BackendRunStatus getStatus(Map<String,String> backendRunId) throws Exception {
-		return BackendRunStatus.SUCCEDED;
+		return BackendRunStatus.SUCCEEDED;
 	}
 
 

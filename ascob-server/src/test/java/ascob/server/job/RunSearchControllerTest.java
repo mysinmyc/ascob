@@ -95,7 +95,7 @@ public class RunSearchControllerTest {
         jobStore.clear();
 
         SubmitRequest submitRequestOk = new SubmitRequest();
-        submitRequestOk.setJobSpec(JobSpec.builder("submitter1").withDescription("test").withLabel("status", BackendRunStatus.SUCCEDED.name()).build());
+        submitRequestOk.setJobSpec(JobSpec.builder("submitter1").withDescription("test").withLabel("status", BackendRunStatus.SUCCEEDED.name()).build());
         for (int cnt = 0; cnt < 7; cnt++) {
             testClients.withJobManagerToken().postForObject("/api/runs", submitRequestOk, Object.class);
         }

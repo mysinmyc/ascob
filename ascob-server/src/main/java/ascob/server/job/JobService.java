@@ -11,6 +11,7 @@ import ascob.server.backend.ExecutionBackendException;
 import ascob.server.backend.ExecutionService;
 import ascob.server.lock.LockManager;
 import ascob.server.util.UnsafeConsumer;
+import ascob.server.util.ValidationException;
 import jakarta.persistence.NoResultException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +26,9 @@ import java.util.ConcurrentModificationException;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Manage the execution of jobs
+ */
 @Component
 public class JobService {
 
@@ -47,72 +51,81 @@ public class JobService {
 		try {
 			refresh(run);
 		} catch (ExecutionBackendException e) {
-
+			log.warn("An error occurred during refresh",e);
 		}
 		return run.getId();
 	}
 
-	public Long resubmitBy(Long sourceRunId,String submitter) throws  InvalidJobSpecException {
+	public Long resubmitBy(Long sourceRunId,String submitter) throws InvalidJobSpecException, RunNotFoundException {
 		InternalRun sourceRun = jobStore.getRunById(sourceRunId);
 		if (sourceRun == null) {
-			throw new JobNotFoundException();
+			throw new RunNotFoundException(sourceRunId);
 		}
 		InternalRun resubmittedRun = jobStore.duplicateRun(sourceRun,submitter);
 		try {
 			refresh(resubmittedRun);
 		} catch (ExecutionBackendException e) {
-
+			log.warn("An error occurred during refresh",e);
 		}
 		return resubmittedRun.getId();
 	}
 
-	public boolean start(Long runId) {
+	public boolean start(Long runId) throws RunNotFoundException {
 		InternalRun run = jobStore.getRunById(runId);
 		if (run == null) {
-			throw new JobNotFoundException();
+			throw new RunNotFoundException(runId);
+		}
+		if (log.isDebugEnabled()) {
+			log.debug("asked to start run {}, status: {}, manualStart:{}, runnable:{}...", runId, run.getStatus(), run.getRuntimeSpec().isManualStart(), run.isRunnable());
 		}
 		if (! (run.getRuntimeSpec().isManualStart() && run.getStatus().equals(RunStatus.DEFINED) && ! run.isRunnable() ) ) {
 			return false;
 		}
+		log.info("Starting run {}, status:{}...",runId, run.getStatus());
 		run.setRunnable(true);
 		jobStore.updateRun(run);
 		try {
 			refresh(run);
 		} catch (ExecutionBackendException e) {
+			log.warn("An error occurred during refresh",e);
 		}
 		return true;
 	}
 
-	public void stop(Long runId) throws ExecutionBackendException {
+	public void stop(Long runId, boolean force) throws ExecutionBackendException, RunNotFoundException {
 		InternalRun run = jobStore.getRunById(runId);
 		if (run == null) {
-			throw new JobNotFoundException();
+			throw new RunNotFoundException(runId);
 		}
+		log.info("stopping run {}, status:{}, force:{}...",runId, run.getStatus(),force);
 		if (!run.getStatus().isRunning()) {
 			run.setStatus(RunStatus.ABORTED);
-			lockManager.releaseLocks(run.getId().toString(), run.getRuntimeSpec().getLocks());
-			jobStore.updateRun(run);
+			lockManager.releaseLocks(runToLockOwnerId(run), run.getRuntimeSpec().getLocks());
 		} else {
 			run.setStatus(RunStatus.ABORTING);
-			executionService.stopRun(run.getBackendRunId());
-			jobStore.updateRun(run);
+			executionService.stopRun(run.getBackendRunId(),force);
 		}
+		jobStore.updateRun(run);
 	}
 
-	public RunInfo getRunInfo(Long runId) {
+	public RunInfo getRunInfo(Long runId) throws RunNotFoundException {
 		InternalRun run = jobStore.getRunById(runId);
 		if (run == null) {
-			throw new JobNotFoundException();
+			throw new RunNotFoundException(runId);
 		}
 		return RunInfoFactory.createRunInfo(run);
 	}
 
-	public RunInfo refresh(Long runId) throws ExecutionBackendException {
+	public RunInfo refresh(Long runId) throws ExecutionBackendException, RunNotFoundException {
 		InternalRun run = jobStore.getRunById(runId);
 		if (run == null) {
-			throw new JobNotFoundException();
+			throw new RunNotFoundException(runId);
 		}
 		return RunInfoFactory.createRunInfo(refresh(run));
+	}
+
+	static String runToLockOwnerId(InternalRun run) {
+		return "run_"+run.getId();
 	}
 
 	protected InternalRun refresh(InternalRun run) throws ExecutionBackendException {
@@ -120,9 +133,10 @@ public class JobService {
 		if (initialStatus.isFinalState()) {
 			return run;
 		}
+		log.debug("Refresh run {} ...",run);
 		if (run.isRunnable() && !initialStatus.isRunning()) {
 			JobSpec jobSpec = run.getRuntimeSpec();
-			if (!lockManager.acquireLocks(run.getId().toString(), jobSpec.getLocks())) {
+			if (!lockManager.acquireLocks(runToLockOwnerId(run), jobSpec.getLocks())) {
 				if (! (RunStatus.WAITING_LOCKS.equals(initialStatus) || jobStore.changeStatus(run, initialStatus, RunStatus.WAITING_LOCKS)) ){
 					throw new ConcurrentModificationException("Status changed externally before set to locked run "+run);
 				}
@@ -154,11 +168,12 @@ public class JobService {
 				run.setStatus(newStatus);
 				if (newStatus.isFinalState()) {
 					run.setEndTime(LocalDateTime.now());
-					lockManager.releaseLocks(run.getId().toString(), run.getRuntimeSpec().getLocks());
+					lockManager.releaseLocks(runToLockOwnerId(run), run.getRuntimeSpec().getLocks());
 				}
 			}
 		}
 		if (!initialStatus.equals(run.getStatus())) {
+			log.debug("New run status {}",run);
 			jobStore.updateRun(run);
 		}
 		return run;
@@ -179,7 +194,7 @@ public class JobService {
 				log.warn("an error occurred during refresh of active job "+run,e);
 			}
 		}
-		return ! activeRuns.isEmpty();
+		return !activeRuns.isEmpty();
 	}
 
 	protected boolean refreshPendingJobs() {
@@ -195,30 +210,30 @@ public class JobService {
 		return ! activeRuns.isEmpty();
 	}
 
-	public void writeRunOutputInto(Long runId, OutputStream outputStream) throws ExecutionBackendException {
+	public void writeRunOutputInto(Long runId, OutputStream outputStream) throws ExecutionBackendException, RunNotFoundException {
 		InternalRun run = jobStore.getRunById(runId);
 		if (run == null) {
-			throw new JobNotFoundException();
+			throw new RunNotFoundException(runId);
 		}
 		executionService.writeOutputInto(run.getBackendRunId(), outputStream);
 	}
 
 
-	protected <X extends Throwable> void updateRunByWebhookId(String webHookId, UnsafeConsumer<InternalRun,X> consumer) throws X {
-		InternalRun internalRun = jobStore.getRunByWebhookId(webHookId);
+	protected <X extends Throwable> void updateRunByWebhookId(String webhookId, UnsafeConsumer<InternalRun,X> consumer) throws X, RunNotFoundException {
+		InternalRun internalRun = jobStore.getRunByWebhookId(webhookId);
 		if (internalRun == null) {
-			throw new JobNotFoundException();
+			throw new RunNotFoundException("Job identified by webhookId "+webhookId+" not found");
 		}
 		consumer.accept(internalRun);
 		jobStore.updateRun(internalRun);
 	}
 
-	public void updateRunStatusByWebhookId(String webHookId, RunStatus runStatus) {
-		updateRunByWebhookId(webHookId, (r)->r.setStatus(runStatus));
+	public void updateRunStatusByWebhookId(String webhookId, RunStatus runStatus) throws RunNotFoundException {
+		updateRunByWebhookId(webhookId, (r)->r.setStatus(runStatus));
 	}
 
-	public void updateRunBackendIdenficationKeysByWebhookId(String webHookId, Map<String,String> identificationKeys) throws  ExecutionBackendException{
-		updateRunByWebhookId(webHookId, (r)->{
+	public void updateRunBackendIdenficationKeysByWebhookId(String webhookId, Map<String,String> identificationKeys) throws ExecutionBackendException, RunNotFoundException {
+		updateRunByWebhookId(webhookId, (r)->{
 			BackendRunId runId = r.getBackendRunId();
 			BackendRunId newRunId = executionService.updateIdentificationKeys(runId, identificationKeys);
 			r.setBackendRunId(newRunId);
@@ -226,26 +241,26 @@ public class JobService {
 		});
 	}
 
-	public void uploadFile(Long runId, String fileId, InputStream inputStream) throws IOException {
+	public void uploadFile(Long runId, String fileId, InputStream inputStream) throws IOException, ValidationException, RunNotFoundException {
 		InternalRun internalRun = jobStore.getRunById(runId);
 		if (internalRun == null) {
-			throw new JobNotFoundException();
+			throw new RunNotFoundException(runId);
 		}
 		if (!internalRun.getStatus().equals(RunStatus.DEFINED)) {
-			throw new RuntimeException("Invalid job status: "+internalRun.getStatus());
+			throw new ValidationException("Invalid job status: "+internalRun.getStatus());
 		}
 		if (internalRun.getParentId()!=null) {
-			throw new RuntimeException("Cannot add files to child jobs");
+			throw new ValidationException("Cannot add files to child jobs");
 		}
 		String filePath="/runs/"+runId+"/"+fileId;
 		fileStore.store(filePath,inputStream);
 		jobStore.addFileReference(internalRun,fileId,filePath);
 	}
 
-	public void downloadFileIntoByWebhookId(String webHookId, String fileId, OutputStream outputStream) throws IOException {
+	public void downloadFileIntoByWebhookId(String webHookId, String fileId, OutputStream outputStream) throws IOException, RunNotFoundException {
 		InternalRun internalRun = jobStore.getRunByWebhookId(webHookId);
 		if (internalRun == null) {
-			throw new JobNotFoundException();
+			throw new RunNotFoundException("job with webhook identified "+webHookId+" not found");
 		}
 		try {
 			String filePath = jobStore.getFileReference(internalRun, fileId).getFilePath();

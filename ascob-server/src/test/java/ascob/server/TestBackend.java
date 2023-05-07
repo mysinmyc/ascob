@@ -1,9 +1,6 @@
 package ascob.server;
 
-import ascob.backend.BackendIdentificationKeysUpdater;
-import ascob.backend.BackendJobStoppable;
-import ascob.backend.BackendRunStatus;
-import ascob.backend.ExecutionBackend;
+import ascob.backend.*;
 import ascob.job.JobSpec;
 import org.springframework.stereotype.Component;
 
@@ -33,7 +30,7 @@ public class TestBackend  implements ExecutionBackend, BackendIdentificationKeys
 		HashMap<String,String> ids = new HashMap<>();
 		String jobId=UUID.randomUUID().toString();
 		ids.put("id", jobId);
-		jobsStatus.put(jobId,  BackendRunStatus.valueOf(jobSpec.getLabelValueOr("status",  BackendRunStatus.SUCCEDED.toString())));
+		jobsStatus.put(jobId,  BackendRunStatus.valueOf(jobSpec.getLabelValueOr("status",  BackendRunStatus.SUCCEEDED.toString())));
 		return ids;
 	}
 
@@ -48,7 +45,7 @@ public class TestBackend  implements ExecutionBackend, BackendIdentificationKeys
 	}
 
 	@Override
-	public void stopRun(Map<String, String> identificationKeys) throws Exception {
+	public void stopRun(Map<String, String> identificationKeys, StopMode stopMode) throws Exception {
 		jobsStatus.put(identificationKeys.get("id"), BackendRunStatus.ABORTED);
 	}
 }

@@ -19,7 +19,7 @@ public class JobServiceTest {
 	JobStore jobStore;
 
 	@Test
-	public void testDummyJob() throws ExecutionBackendException, InvalidJobSpecException {
+	public void testDummyJob() throws ExecutionBackendException, InvalidJobSpecException, RunNotFoundException {
 
 		JobSpec jobSpec = new JobSpecBuilder("test").withDescription("dummy").build();
 
@@ -37,7 +37,7 @@ public class JobServiceTest {
 	}
 
 	@Test
-	public void testSubmitException() throws InvalidJobSpecException {
+	public void testSubmitException() throws InvalidJobSpecException, RunNotFoundException {
 
 		JobSpec jobSpec = new JobSpecBuilder("test").build();
 
@@ -49,7 +49,7 @@ public class JobServiceTest {
 
 
 	@Test
-	public void testRefreshJobs() throws InvalidJobSpecException {
+	public void testRefreshJobs() throws InvalidJobSpecException, RunNotFoundException {
 
 		JobSpec jobOkSpec = new JobSpecBuilder("test").withDescription("dummy").build();
 		JobSpec jobKoSpec = new JobSpecBuilder("test").build();
@@ -91,7 +91,7 @@ public class JobServiceTest {
 	}
 
 	@Test
-	public void testManualStart() throws InvalidJobSpecException {
+	public void testManualStart() throws InvalidJobSpecException, RunNotFoundException {
 
 		JobSpec jobSpec = JobSpec.builder("test").withManualStart().withDescription("test").build();
 		long runId = jobService.submit(jobSpec);
@@ -108,7 +108,7 @@ public class JobServiceTest {
 	}
 
 	@Test
-	public void testLock() throws InvalidJobSpecException, ExecutionBackendException {
+	public void testLock() throws InvalidJobSpecException, ExecutionBackendException, RunNotFoundException {
 
 		JobSpec jobSpecBlocker = JobSpec.builder("test").withDescription("test").withLocks("test1").withLabel("status", BackendRunStatus.RUNNING.name()).withDescription("test").build();
 		long runIdBlocker = jobService.submit(jobSpecBlocker);
@@ -126,7 +126,7 @@ public class JobServiceTest {
 		RunInfo runInfoBlocked = jobService.getRunInfo(runIdBlocked);
 		assertEquals(RunStatus.WAITING_LOCKS, runInfoBlocked.getStatus());
 
-		jobService.stop(runIdBlocker);
+		jobService.stop(runIdBlocker,true);
 
 		jobService.refreshJobs();
 

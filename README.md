@@ -10,6 +10,31 @@ E' studiato per porsi come frontend di portali di automazione custom:
 - Repository interno dei run. All'atto della sottomissione è possibile indicare l'utente finale owner del job
 - Sistema di locking
 
+## Architettura
+
+Il job è l'entità atomica gestita dal framework. Rappresenta un'operazione da eseguire su un backend; Il backend da utilizzare è identificato mediante labels
+Il backend effettua l'operazione descritta dal job con i parameteri forniti.
+Il run è l'esecuzione di un job
+Per gestire la concorrenza dei job è previsto che i job possano fornire una serie di lock da acquisire. Le lock sono memorizzate in un KV store
+
+
+## Esecuzione di un job
+
+Il job è descritto dalla classe [JobSpec](ascob-core%2Fsrc%2Fmain%2Fjava%2Fascob%2Fjob%2FJobSpec.java)
+
+Dispone di un builder per semplificarne la definizione.
+
+Lato server il compnente responsabile per la sottomissione del job è il [JobService](ascob-server%2Fsrc%2Fmain%2Fjava%2Fascob%2Fserver%2Fjob%2FJobService.java)
+
+Il jobservice identifica ogni lancio mediante runId ma non espone gli internals del run
+
+```
+    JobSpec jobSpec = JobSpec.builder("submitter").withDescription("Job di prova").build();
+    Long runId = jobService.submit(jobSpec);
+```
+
+
+
 
 ## Da implementare
 
@@ -22,9 +47,10 @@ E' studiato per porsi come frontend di portali di automazione custom:
 - [x] security
 - [x] ricerca job
 - [x] retry job (by resubmission)
+- [x] swagger api (yaml generato da runtime)
 - [ ] logging ed error handling
 - [ ] documentazione
-- [ ] swagger api
+
 
 
 

@@ -17,7 +17,7 @@ public class NotAuthorizedException extends  Exception {
     }
 
     public NotAuthorizedException(Permission missingPermission) {
-        this("Missing  permission "+missingPermission.name());
+        this("Missing permission "+missingPermission.name());
         this.missingPermission = missingPermission;
     }
 }

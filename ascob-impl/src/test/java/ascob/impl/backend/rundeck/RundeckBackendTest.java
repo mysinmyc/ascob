@@ -1,5 +1,6 @@
 package ascob.impl.backend.rundeck;
 
+import ascob.backend.StopMode;
 import ascob.job.JobSpec;
 import ascob.job.JobSpecBuilder;
 import ascob.backend.BackendRunStatus;
@@ -49,7 +50,7 @@ public class RundeckBackendTest {
         Map<String, String> identifier = rundeckBackend.submit(jobSpec);
 
         BackendRunStatus status = rundeckBackend.getStatus(identifier);
-        assertTrue(status.equals(BackendRunStatus.RUNNING) || status.equals(BackendRunStatus.SUCCEDED));
+        assertTrue(status.equals(BackendRunStatus.RUNNING) || status.equals(BackendRunStatus.SUCCEEDED));
 
         for (int i = 0; i < 100 && BackendRunStatus.RUNNING.equals(rundeckBackend.getStatus(identifier)); i++) {
             Thread.sleep(500);
@@ -76,7 +77,7 @@ public class RundeckBackendTest {
         BackendRunStatus status = rundeckBackend.getStatus(identifier);
         assertTrue(status.equals(BackendRunStatus.RUNNING));
 
-        rundeckBackend.stopRun(identifier);
+        rundeckBackend.stopRun(identifier, StopMode.CLEAN);
         for (int i = 0; i < 100 && BackendRunStatus.RUNNING.equals(rundeckBackend.getStatus(identifier)); i++) {
             Thread.sleep(500);
         }

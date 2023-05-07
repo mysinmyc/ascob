@@ -25,6 +25,9 @@ public class BackendRunId {
 	}
 
 
-
-	
+	@Override
+	public String toString() {
+		String identificationKeysToString = identificationKeys == null ? "": identificationKeys.entrySet().stream().map( (e)-> ""+e.getKey()+":"+e.getValue()+" ").reduce( "", (a, b)-> a+ " "+b );
+		return "[ backendId: "+backendId+"  identification keys: [map [" +identificationKeysToString+"]]";
+	}
 }

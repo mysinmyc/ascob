@@ -2,6 +2,11 @@ package ascob.job;
 
 import java.util.List;
 
+/**
+ * Describe a job to run
+ *
+ * It is suggested to use method builder to build it
+ */
 public class JobSpec {
 
 	String description;
