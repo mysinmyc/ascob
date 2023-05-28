@@ -28,7 +28,7 @@ public class RunWebhookController {
         @Autowired
         JobService jobService;
 
-        @Operation(description = "Update run info by using webhook. Some backend implementation are not aware abound identification keys or job status at submission. In this case the underling job must use this webhook to update run identifications keys and status")
+        @Operation(summary="Update run info", description = "Update run info by using webhook. Some backend implementation are not aware abound identification keys or job status at submission. In this case the underling job must use this webhook to update run identifications keys and status")
         @RequestMapping(method= RequestMethod.POST, path = "/{webhookId}")
         public void updateRun(@Parameter(description = "Webhook id") @PathVariable("webhookId") String webhookId, @RequestBody UpdateRunWebhookRequest updateRunWebhookRequest, Authentication authentication) throws ExecutionBackendException, NotAuthorizedException, RunNotFoundException {
                 if (updateRunWebhookRequest.getIdentificationKeys() != null && ! updateRunWebhookRequest.getIdentificationKeys().isEmpty()) {
@@ -41,7 +41,7 @@ public class RunWebhookController {
                 }
         }
 
-        @Operation(description = "Allow jobs to retrieve files attached to execution")
+        @Operation(summary = "Download a run input file", description = "This operation can be used to retrieve files attached to execution from inside of running job")
         @RequestMapping(method=RequestMethod.GET, path = "/{webhookId}/files/{fileId}")
         public void getFile(@Parameter(description = "Webhook id") @PathVariable("webhookId") String webhookId,@Parameter(description = "File identifier") @PathVariable("fileId") String fileId, HttpServletResponse response, Authentication authentication) throws ExecutionBackendException, IOException, NotAuthorizedException, RunNotFoundException {
                 securityAssertionService.assertAuthorized(authentication, Permission.webhook_get_files);

@@ -31,7 +31,7 @@ public class RunSearchController {
     @Autowired
     JobService jobService;
 
-    @Operation(description = "Search job runs")
+    @Operation(summary = "Search job runs")
     @ApiResponses(
             {
                     @ApiResponse( responseCode = "200", description = "Search results"),

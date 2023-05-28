@@ -9,6 +9,7 @@ paths:
     post:
       tags:
       - run-webhook-controller
+      summary: Update run info
       description: Update run info by using webhook. Some backend implementation are
         not aware abound identification keys or job status at submission. In this
         case the underling job must use this webhook to update run identifications
@@ -36,7 +37,7 @@ paths:
     post:
       tags:
       - security-controller
-      description: Generate a new api token
+      summary: Generate a new api token
       operationId: createToken
       parameters:
       - name: identifier
@@ -63,7 +64,7 @@ paths:
     delete:
       tags:
       - security-controller
-      description: Delete tokens
+      summary: Revoke an api token
       operationId: deleteTokenByIdentifier
       parameters:
       - name: identifier
@@ -81,7 +82,7 @@ paths:
     post:
       tags:
       - run-search-controller
-      description: Search job runs
+      summary: Search job runs
       operationId: search
       requestBody:
         content:
@@ -96,7 +97,7 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/SearchRunResponse'
-        "403":
+        "401":
           description: Not authorized
       security:
       - X-Api-Token: []
@@ -104,7 +105,7 @@ paths:
     post:
       tags:
       - run-controller
-      description: Submit a job
+      summary: Submit a job
       operationId: submit
       requestBody:
         content:
@@ -113,14 +114,14 @@ paths:
               $ref: '#/components/schemas/SubmitRequest'
         required: true
       responses:
-        "403":
-          description: User not authorized
         "200":
           description: Job submitted
           content:
             '*/*':
               schema:
                 $ref: '#/components/schemas/SubmitResponse'
+        "401":
+          description: User not authorized
         "400":
           description: Invalid job specs
           content:
@@ -133,8 +134,8 @@ paths:
     post:
       tags:
       - run-controller
-      description: Post an input file to the run. It works only if the run is not
-        started
+      summary: Post an input file to the run
+      description: It works only if the run is not started
       operationId: upload
       parameters:
       - name: runId
@@ -151,18 +152,18 @@ paths:
         schema:
           type: string
       responses:
-        "403":
-          description: User not authorized
-        "200":
-          description: File uploaded
-        "404":
-          description: Run not found
         "500":
           description: An error occurred upload
           content:
             '*/*':
               schema:
                 $ref: '#/components/schemas/ErrorPayload'
+        "200":
+          description: File uploaded
+        "404":
+          description: Run not found
+        "401":
+          description: User not authorized
         "400":
           description: Cannot add files to the run
           content:
@@ -175,7 +176,9 @@ paths:
     get:
       tags:
       - run-webhook-controller
-      description: Allow jobs to retrieve files attached to execution
+      summary: Download a run input file
+      description: This operation can be used to retrieve files attached to execution
+        from inside of running job
       operationId: getFile
       parameters:
       - name: webhookId
@@ -199,7 +202,7 @@ paths:
     get:
       tags:
       - security-controller
-      description: return authentication name
+      summary: return the authentication info
       operationId: whoami
       responses:
         "200":
@@ -207,14 +210,14 @@ paths:
           content:
             '*/*':
               schema:
-                type: string
+                $ref: '#/components/schemas/WhoAmIResponse'
       security:
       - X-Api-Token: []
   /api/runs/{runId}:
     get:
       tags:
       - run-controller
-      description: Get status of run
+      summary: Get status the run status
       operationId: getRunInfo
       parameters:
       - name: runId
@@ -225,22 +228,22 @@ paths:
           type: integer
           format: int64
       responses:
-        "403":
-          description: User not authorized
-        "404":
-          description: Run not found
         "200":
           description: Job submitted
           content:
             '*/*':
               schema:
                 $ref: '#/components/schemas/RunInfo'
+        "404":
+          description: Run not found
+        "401":
+          description: User not authorized
       security:
       - X-Api-Token: []
     delete:
       tags:
       - run-controller
-      description: Stop a run
+      summary: Stop a run
       operationId: stop
       parameters:
       - name: runId
@@ -258,8 +261,6 @@ paths:
           type: boolean
           default: false
       responses:
-        "403":
-          description: User not authorized
         "200":
           description: Run aborted
         "500":
@@ -270,13 +271,16 @@ paths:
                 $ref: '#/components/schemas/ErrorPayload'
         "404":
           description: Run not found
+        "401":
+          description: User not authorized
       security:
       - X-Api-Token: []
   /api/runs/{runId}/start:
     get:
       tags:
       - run-controller
-      description: Start a run. It works only for job defined ad manual start
+      summary: Start a run
+      description: It works only for job defined ad manual start
       operationId: start
       parameters:
       - name: runId
@@ -287,20 +291,20 @@ paths:
           type: integer
           format: int64
       responses:
-        "403":
-          description: User not authorized
         "200":
           description: Run started
         "404":
           description: Run not found
+        "401":
+          description: User not authorized
       security:
       - X-Api-Token: []
   /api/runs/{runId}/resubmit:
     get:
       tags:
       - run-controller
-      description: Resubmit a run. It create a new job with the same spec of the source
-        run
+      summary: Resubmit a run
+      description: Create a new job with the same spec of the source run
       operationId: resubmit
       parameters:
       - name: runId
@@ -323,10 +327,10 @@ paths:
             '*/*':
               schema:
                 $ref: '#/components/schemas/SubmitResponse'
-        "403":
-          description: User not authorized
         "404":
           description: Run not found
+        "401":
+          description: User not authorized
         "400":
           description: Invalid job specs
           content:
@@ -339,7 +343,7 @@ paths:
     get:
       tags:
       - run-controller
-      description: Refresh job status
+      summary: Refresh job status
       operationId: refreshRunInfo
       parameters:
       - name: runId
@@ -349,8 +353,6 @@ paths:
           type: integer
           format: int64
       responses:
-        "403":
-          description: User not authorized
         "200":
           description: Refresh completed
           content:
@@ -359,6 +361,8 @@ paths:
                 $ref: '#/components/schemas/RunInfo'
         "404":
           description: Run not found
+        "401":
+          description: User not authorized
         "500":
           description: An error occurred during refresh
           content:
@@ -371,7 +375,7 @@ paths:
     get:
       tags:
       - run-controller
-      description: Get run output
+      summary: Get run output
       operationId: getRunOutput
       parameters:
       - name: runId
@@ -381,12 +385,12 @@ paths:
           type: integer
           format: int64
       responses:
-        "403":
-          description: User not authorized
         "200":
           description: Job output
         "404":
           description: Run not found
+        "401":
+          description: User not authorized
         "500":
           description: An error occurred during output retrieval
           content:
@@ -570,6 +574,13 @@ components:
         runId:
           type: integer
           format: int64
+    WhoAmIResponse:
+      type: object
+      properties:
+        authorities:
+          type: array
+          items:
+            type: string
   securitySchemes:
     X-Api-Token:
       type: apiKey

@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 @SecurityRequirements({@SecurityRequirement(name = ApiInfo.API_TOKEN_SCHEMA_NAME)})
@@ -21,13 +22,17 @@ public class SecurityController {
     @Autowired
     ApiTokenValidator apiTokenValidator;
 
-    @Operation(description = "return authentication name")
+    @Operation(summary = "return the authentication info")
     @RequestMapping(value = "/whoami", method = RequestMethod.GET)
-    public String whoami( Authentication authentication) {
-        return authentication.getName();
+    public WhoAmIResponse whoami( Authentication authentication) {
+        WhoAmIResponse whoAmIResponse = new WhoAmIResponse();
+        whoAmIResponse.setAuthorities(
+                authentication.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList()
+        );
+        return whoAmIResponse;
     }
 
-    @Operation(description = "Generate a new api token")
+    @Operation(summary = "Generate a new api token")
     @RequestMapping(value = "/tokens/{identifier}",method = RequestMethod.POST)
     public CreateTokenResponse createToken(@Parameter(description = "token identifier") @PathVariable("identifier") String identifier,
                                            @RequestBody CreateTokenRequest request, Authentication authentication) throws NotAuthorizedException {
@@ -45,7 +50,7 @@ public class SecurityController {
         }
     }
 
-    @Operation(description = "Delete tokens")
+    @Operation(summary = "Revoke an api token")
     @RequestMapping(value = "/tokens/{identifier}",method = RequestMethod.DELETE)
     public void deleteTokenByIdentifier(@Parameter(description = "Token identifier") @PathVariable("identifier") String identifier, Authentication authentication) throws NotAuthorizedException {
         securityAssertionService.assertAuthorized(authentication, Permission.security_token_write);

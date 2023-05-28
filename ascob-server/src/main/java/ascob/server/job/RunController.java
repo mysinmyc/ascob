@@ -37,7 +37,7 @@ public class RunController {
 	@Autowired
 	JobService jobService;
 	
-	@Operation(description = "Submit a job")
+	@Operation(summary = "Submit a job")
 	@ApiResponses(
 			{
 					@ApiResponse(responseCode = "200", description = "Job submitted"),
@@ -56,7 +56,7 @@ public class RunController {
 		return response;
 	}
 
-	@Operation(description = "Resubmit a run. It create a new job with the same spec of the source run")
+	@Operation(summary = "Resubmit a run", description="Create a new job with the same spec of the source run")
 	@ApiResponses(
 			{
 					@ApiResponse(responseCode = "200", description = "Job resubmitted"),
@@ -74,7 +74,7 @@ public class RunController {
 		return response;
 	}
 
-	@Operation(description = "Get status of run")
+	@Operation(summary = "Get status the run status")
 	@ApiResponses(
 			{
 					@ApiResponse(responseCode = "200", description = "Job submitted"),
@@ -88,7 +88,7 @@ public class RunController {
 		return jobService.getRunInfo(runId);
 	}
 
-	@Operation(description = "Start a run. It works only for job defined ad manual start")
+	@Operation(summary="Start a run", description = "It works only for job defined ad manual start")
 	@ApiResponses(
 			{
 					@ApiResponse(responseCode = "200", description = "Run started"),
@@ -105,7 +105,7 @@ public class RunController {
 		}
 	}
 
-	@Operation(description = "Stop a run")
+	@Operation(summary = "Stop a run")
 	@ApiResponses(
 			{
 					@ApiResponse(responseCode = "200", description = "Run aborted"),
@@ -120,7 +120,7 @@ public class RunController {
 		jobService.stop(runId,force);
 	}
 
-	@Operation(description = "Post an input file to the run. It works only if the run is not started")
+	@Operation(summary = "Post an input file to the run", description="It works only if the run is not started")
 	@ApiResponses(
 			{
 					@ApiResponse(responseCode = "200", description = "File uploaded"),
@@ -138,7 +138,7 @@ public class RunController {
 		}
 	}
 
-	@Operation(description = "Refresh job status")
+	@Operation(summary = "Refresh job status")
 	@ApiResponses(
 			{
 					@ApiResponse(responseCode = "200", description = "Refresh completed"),
@@ -154,7 +154,7 @@ public class RunController {
 		return jobService.refresh(runId);
 	}
 
-	@Operation(description = "Get run output")
+	@Operation(summary = "Get run output")
 	@ApiResponses(
 			{
 					@ApiResponse(responseCode = "200", description = "Job output"),
