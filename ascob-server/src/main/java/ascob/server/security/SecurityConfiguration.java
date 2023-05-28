@@ -20,10 +20,10 @@ public class SecurityConfiguration {
 
 	@Bean
 	public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		http.authorizeHttpRequests(c -> c.requestMatchers("/v3/**","/swagger-ui.html", "/swagger-ui/**").anonymous().anyRequest().authenticated())
+		http.authorizeHttpRequests(c -> c.requestMatchers("/v3/**", "/swagger-ui.html", "/swagger-ui/**").anonymous().anyRequest().authenticated())
 				.cors().configurationSource(request -> new CorsConfiguration().applyPermitDefaultValues()).and().csrf().disable()
 				.sessionManagement().disable();
-		http.addFilterBefore( apiTokenValidatorFilter, UsernamePasswordAuthenticationFilter.class);
+		http.addFilterBefore(apiTokenValidatorFilter, UsernamePasswordAuthenticationFilter.class);
 		return http.build();
 	}
 

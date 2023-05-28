@@ -42,7 +42,7 @@ public class RunController {
 			{
 					@ApiResponse(responseCode = "200", description = "Job submitted"),
 					@ApiResponse(responseCode = "400", description = "Invalid job specs", content = @Content(schema = @Schema(implementation = ErrorPayload.class))),
-					@ApiResponse(responseCode = "403", description = "User not authorized", content = @Content(schema = @Schema())),}
+					@ApiResponse(responseCode = "401", description = "User not authorized", content = @Content(schema = @Schema())),}
 	)
 	@RequestMapping(method=RequestMethod.POST)
 	public SubmitResponse submit(@RequestBody SubmitRequest request, Authentication authentication) throws NotAuthorizedException, InvalidJobSpecException {
@@ -61,7 +61,7 @@ public class RunController {
 			{
 					@ApiResponse(responseCode = "200", description = "Job resubmitted"),
 					@ApiResponse(responseCode = "400", description = "Invalid job specs", content = @Content(schema = @Schema(implementation = ErrorPayload.class))),
-					@ApiResponse(responseCode = "403", description = "User not authorized", content = @Content(schema = @Schema())),
+					@ApiResponse(responseCode = "401", description = "User not authorized", content = @Content(schema = @Schema())),
 					@ApiResponse(responseCode = "404", description = "Run not found", content = @Content(schema = @Schema()))
 			}
 	)
@@ -78,7 +78,7 @@ public class RunController {
 	@ApiResponses(
 			{
 					@ApiResponse(responseCode = "200", description = "Job submitted"),
-					@ApiResponse(responseCode = "403", description = "User not authorized", content = @Content(schema = @Schema())),
+					@ApiResponse(responseCode = "401", description = "User not authorized", content = @Content(schema = @Schema())),
 					@ApiResponse(responseCode = "404", description = "Run not found", content = @Content(schema = @Schema()))
 			}
 	)
@@ -92,7 +92,7 @@ public class RunController {
 	@ApiResponses(
 			{
 					@ApiResponse(responseCode = "200", description = "Run started"),
-					@ApiResponse(responseCode = "403", description = "User not authorized", content = @Content(schema = @Schema())),
+					@ApiResponse(responseCode = "401", description = "User not authorized", content = @Content(schema = @Schema())),
 					@ApiResponse(responseCode = "404", description = "Run not found", content = @Content(schema = @Schema()))
 			}
 	)
@@ -109,7 +109,7 @@ public class RunController {
 	@ApiResponses(
 			{
 					@ApiResponse(responseCode = "200", description = "Run aborted"),
-					@ApiResponse(responseCode = "403", description = "User not authorized", content = @Content(schema = @Schema())),
+					@ApiResponse(responseCode = "401", description = "User not authorized", content = @Content(schema = @Schema())),
 					@ApiResponse(responseCode = "404", description = "Run not found", content = @Content(schema = @Schema())),
 					@ApiResponse(responseCode = "500", description = "An error occurred during stop operations", content = @Content(schema = @Schema(implementation = ErrorPayload.class)))
 			}
@@ -125,7 +125,7 @@ public class RunController {
 			{
 					@ApiResponse(responseCode = "200", description = "File uploaded"),
 					@ApiResponse(responseCode = "400", description = "Cannot add files to the run", content = @Content(schema = @Schema(implementation = ErrorPayload.class))),
-					@ApiResponse(responseCode = "403", description = "User not authorized", content = @Content(schema = @Schema())),
+					@ApiResponse(responseCode = "401", description = "User not authorized", content = @Content(schema = @Schema())),
 					@ApiResponse(responseCode = "404", description = "Run not found", content = @Content(schema = @Schema())),
 					@ApiResponse(responseCode = "500", description = "An error occurred upload", content = @Content(schema = @Schema(implementation = ErrorPayload.class))),
 			}
@@ -142,7 +142,7 @@ public class RunController {
 	@ApiResponses(
 			{
 					@ApiResponse(responseCode = "200", description = "Refresh completed"),
-					@ApiResponse(responseCode = "403", description = "User not authorized", content = @Content(schema = @Schema())),
+					@ApiResponse(responseCode = "401", description = "User not authorized", content = @Content(schema = @Schema())),
 					@ApiResponse(responseCode = "404", description = "Run not found", content = @Content(schema = @Schema())),
 					@ApiResponse(responseCode = "500", description = "An error occurred during refresh", content = @Content(schema = @Schema(implementation = ErrorPayload.class))),
 			}
@@ -158,7 +158,7 @@ public class RunController {
 	@ApiResponses(
 			{
 					@ApiResponse(responseCode = "200", description = "Job output"),
-					@ApiResponse(responseCode = "403", description = "User not authorized", content = @Content(schema = @Schema())),
+					@ApiResponse(responseCode = "401", description = "User not authorized", content = @Content(schema = @Schema())),
 					@ApiResponse(responseCode = "404", description = "Run not found", content = @Content(schema = @Schema())),
 					@ApiResponse(responseCode = "500", description = "An error occurred during output retrieval", content = @Content(schema = @Schema(implementation = ErrorPayload.class))),
 			}

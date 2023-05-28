@@ -35,7 +35,7 @@ public class RunSearchController {
     @ApiResponses(
             {
                     @ApiResponse( responseCode = "200", description = "Search results"),
-                    @ApiResponse( responseCode = "403", description = "Not authorized", content = @Content(schema = @Schema()))
+                    @ApiResponse( responseCode = "401", description = "Not authorized", content = @Content(schema = @Schema()))
             }
     )
     @RequestMapping(method = RequestMethod.POST)
